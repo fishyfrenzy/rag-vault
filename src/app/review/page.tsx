@@ -22,6 +22,7 @@ interface EditProposal {
     upvotes: number;
     downvotes: number;
     created_at: string;
+    user_id: string;
     user: {
         display_name: string;
         karma_score: number;
@@ -36,10 +37,18 @@ export default function ReviewPage() {
     const [proposals, setProposals] = useState<EditProposal[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<"pending" | "approved" | "rejected">("pending");
+    const [isAdmin, setIsAdmin] = useState(false);
+
+    useEffect(() => {
+        if (user) {
+            supabase.from("profiles").select("is_admin").eq("id", user.id).single()
+                .then(({ data }) => setIsAdmin(!!data?.is_admin));
+        }
+    }, [user]);
 
     const userTier = profile?.karma_score ? getTierFromKarma(profile.karma_score) : "newcomer";
-    const canReview = hasPermission(userTier, "vote_on_edits");
-    const canApprove = hasPermission(userTier, "approve_edits");
+    const canReview = hasPermission(userTier, "vote_on_edits", isAdmin);
+    const canApprove = hasPermission(userTier, "approve_edits", isAdmin);
 
     const fetchProposalsRef = React.useRef<() => Promise<void>>(undefined);
 
@@ -49,7 +58,7 @@ export default function ReviewPage() {
             const { data, error } = await supabase
                 .from("edit_proposals")
                 .select(`
-            id, vault_item_id, field_name, old_value, new_value, status, upvotes, downvotes, created_at,
+            id, vault_item_id, field_name, old_value, new_value, status, upvotes, downvotes, created_at, user_id,
             user:profiles(display_name, karma_score),
             vault_item:the_vault(subject)
           `)
@@ -89,9 +98,9 @@ export default function ReviewPage() {
             .eq("id", proposal.id);
 
         // Award karma to proposer (if not self)
-        if (proposal.user) {
+        if (proposal.user_id && proposal.user_id !== user.id) {
             await supabase.rpc("award_karma", {
-                p_user_id: proposal.id, // This should be the proposer's user_id
+                p_user_id: proposal.user_id,
                 p_action: "edit_accepted",
                 p_points: 3,
                 p_reference_type: "edit_proposal",
@@ -122,6 +131,7 @@ export default function ReviewPage() {
                 <p className="text-muted-foreground">
                     You need to be a <strong>Trusted</strong> member (200+ karma) to review edits.
                 </p>
+                {isAdmin && <Badge variant="outline" className="text-purple-500 border-purple-500">Admin Bypass Active</Badge>}
                 {profile && (
                     <KarmaBadge tier={userTier} karma={profile.karma_score || 0} showProgress />
                 )}
@@ -134,7 +144,10 @@ export default function ReviewPage() {
             {/* Header */}
             <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border/40 px-6 py-4 space-y-4">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold">Review Queue</h1>
+                    <div className="flex items-center gap-2">
+                        <h1 className="text-2xl font-bold">Review Queue</h1>
+                        {isAdmin && <Badge variant="secondary" className="bg-purple-500/10 text-purple-500 border-purple-500/20">Admin</Badge>}
+                    </div>
                     <KarmaBadge tier={userTier} karma={profile?.karma_score || 0} size="sm" />
                 </div>
 

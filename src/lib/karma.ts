@@ -67,7 +67,8 @@ export function getTierFromKarma(karma: number): KarmaTier {
     return 'newcomer';
 }
 
-export function hasPermission(tier: KarmaTier, permission: Permission): boolean {
+export function hasPermission(tier: KarmaTier, permission: Permission, isAdmin: boolean = false): boolean {
+    if (isAdmin) return true;
     const allowedTiers = PERMISSIONS[permission] as readonly string[];
     return allowedTiers.includes(tier);
 }
