@@ -14,7 +14,7 @@ import { ProfileSettingsModal } from "@/components/profile/ProfileSettingsModal"
 import { AchievementBadge, achievementConfig } from "@/components/profile/AchievementBadge";
 import { IsoManageModal } from "@/components/profile/IsoList";
 import { CollectionSelector, ShirtSelector } from "@/components/profile/SlotSelectors";
-import { Settings, Share, LogOut, MapPin, Calendar, Plus, Pencil, Search, X, LayoutGrid, Folder, Shirt, Star, GripVertical } from "lucide-react";
+import { Settings, Share, LogOut, MapPin, Calendar, Plus, Pencil, Search, X, LayoutGrid, Folder, Shirt, Star, GripVertical, Check, ChevronUp, ChevronDown } from "lucide-react";
 
 interface InventoryItem {
     id: string;
@@ -307,12 +307,24 @@ export default function ProfilePage() {
         setDraggedSlotIndex(null);
         // Save the pending slots order
         if (pendingSlotsRef.current) {
-            await supabase
-                .from('profiles')
-                .update({ profile_slots: pendingSlotsRef.current })
-                .eq('id', user.id);
+            await updateSlots(pendingSlotsRef.current);
             pendingSlotsRef.current = null;
         }
+    };
+
+    const moveSlot = async (index: number, direction: 'up' | 'down') => {
+        if (
+            (direction === 'up' && index === 0) ||
+            (direction === 'down' && index === slots.length - 1)
+        ) return;
+
+        const newSlots = [...slots];
+        const newIndex = direction === 'up' ? index - 1 : index + 1;
+        [newSlots[index], newSlots[newIndex]] = [newSlots[newIndex], newSlots[index]];
+
+        // Optimistic update
+        setProfileData(prev => ({ ...prev, profile_slots: newSlots }));
+        await updateSlots(newSlots);
     };
 
     const renderSlotContent = (slot: ProfileSlot) => {
@@ -645,6 +657,26 @@ export default function ProfilePage() {
                                 </button>
                             )}
 
+                            {/* Move buttons in edit mode */}
+                            {editingSlots && (
+                                <div className="absolute top-2 right-8 flex gap-1 z-10">
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); moveSlot(index, 'up'); }}
+                                        disabled={index === 0}
+                                        className="p-1 rounded-full bg-secondary hover:bg-secondary/80 disabled:opacity-30 disabled:cursor-not-allowed"
+                                    >
+                                        <ChevronUp className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); moveSlot(index, 'down'); }}
+                                        disabled={index === slots.length - 1}
+                                        className="p-1 rounded-full bg-secondary hover:bg-secondary/80 disabled:opacity-30 disabled:cursor-not-allowed"
+                                    >
+                                        <ChevronDown className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
+
                             <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
                                 {editingSlots && (
                                     <GripVertical className="w-5 h-5 text-primary/60 -ml-1" />
@@ -669,108 +701,122 @@ export default function ProfilePage() {
                 </div>
             </div>
 
-            {loading && (
-                <div className="py-20 text-center flex flex-col items-center gap-4">
-                    <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-                    <p className="text-sm font-medium text-muted-foreground tracking-wide">Loading...</p>
-                </div>
-            )}
+            {
+                loading && (
+                    <div className="py-20 text-center flex flex-col items-center gap-4">
+                        <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+                        <p className="text-sm font-medium text-muted-foreground tracking-wide">Loading...</p>
+                    </div>
+                )
+            }
 
             {/* Slot Picker Modal */}
-            {showSlotPicker && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in">
-                    <div className="w-full max-w-sm bg-card border border-border rounded-2xl shadow-2xl p-6 space-y-4 animate-in zoom-in-95">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-bold">Add Section</h3>
-                            <Button variant="ghost" size="icon" onClick={() => setShowSlotPicker(false)} className="rounded-full">
-                                <X className="w-4 h-4" />
-                            </Button>
-                        </div>
-                        <div className="space-y-2">
-                            {SLOT_OPTIONS.map(opt => {
-                                // Can add multiple collection/shirts but only one of each generic type
-                                const alreadyHas = opt.type !== 'collection' && opt.type !== 'shirts' &&
-                                    slots.some(s => s.type === opt.type);
-                                if (alreadyHas) return null;
+            {
+                showSlotPicker && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in">
+                        <div className="w-full max-w-sm bg-card border border-border rounded-2xl shadow-2xl p-6 space-y-4 animate-in zoom-in-95">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-bold">Add Section</h3>
+                                <Button variant="ghost" size="icon" onClick={() => setShowSlotPicker(false)} className="rounded-full">
+                                    <X className="w-4 h-4" />
+                                </Button>
+                            </div>
+                            <div className="space-y-2">
+                                {SLOT_OPTIONS.map(opt => {
+                                    // Can add multiple collection/shirts but only one of each generic type
+                                    const alreadyHas = opt.type !== 'collection' && opt.type !== 'shirts' &&
+                                        slots.some(s => s.type === opt.type);
+                                    if (alreadyHas) return null;
 
-                                const Icon = opt.icon;
-                                return (
-                                    <button
-                                        key={opt.type}
-                                        onClick={() => addSlot(opt.type)}
-                                        className="w-full flex items-center gap-3 p-4 rounded-xl border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-colors text-left"
-                                    >
-                                        <div className="p-2 rounded-lg bg-secondary">
-                                            <Icon className="w-5 h-5" />
-                                        </div>
-                                        <div>
-                                            <p className="font-medium">{opt.label}</p>
-                                            <p className="text-xs text-muted-foreground">{opt.description}</p>
-                                        </div>
-                                    </button>
-                                );
-                            })}
+                                    const Icon = opt.icon;
+                                    return (
+                                        <button
+                                            key={opt.type}
+                                            onClick={() => addSlot(opt.type)}
+                                            className="w-full flex items-center gap-3 p-4 rounded-xl border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-colors text-left"
+                                        >
+                                            <div className="p-2 rounded-lg bg-secondary">
+                                                <Icon className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium">{opt.label}</p>
+                                                <p className="text-xs text-muted-foreground">{opt.description}</p>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Collection Selector */}
-            {showCollectionSelector && (
-                <CollectionSelector
-                    userId={user.id}
-                    onSelect={addCollectionSlot}
-                    onClose={() => setShowCollectionSelector(false)}
-                />
-            )}
+            {
+                showCollectionSelector && (
+                    <CollectionSelector
+                        userId={user.id}
+                        onSelect={addCollectionSlot}
+                        onClose={() => setShowCollectionSelector(false)}
+                    />
+                )
+            }
 
             {/* Shirt Selector */}
-            {showShirtSelector && (
-                <ShirtSelector
-                    userId={user.id}
-                    onSelect={addShirtsSlot}
-                    onClose={() => setShowShirtSelector(false)}
-                />
-            )}
+            {
+                showShirtSelector && (
+                    <ShirtSelector
+                        userId={user.id}
+                        onSelect={addShirtsSlot}
+                        onClose={() => setShowShirtSelector(false)}
+                    />
+                )
+            }
 
             {/* ISO Manage Modal */}
-            {showIsoModal && (
-                <IsoManageModal
-                    userId={user.id}
-                    onClose={() => {
-                        setShowIsoModal(false);
-                        if (fetchDataRef.current) fetchDataRef.current();
-                    }}
-                />
-            )}
+            {
+                showIsoModal && (
+                    <IsoManageModal
+                        userId={user.id}
+                        onClose={() => {
+                            setShowIsoModal(false);
+                            if (fetchDataRef.current) fetchDataRef.current();
+                        }}
+                    />
+                )
+            }
 
             {/* Modals */}
-            {showCreateModal && (
-                <CreateCollectionModal
-                    userId={user.id}
-                    onClose={() => setShowCreateModal(false)}
-                    onSuccess={() => {
-                        setShowCreateModal(false);
-                        if (fetchDataRef.current) fetchDataRef.current();
-                    }}
-                />
-            )}
+            {
+                showCreateModal && (
+                    <CreateCollectionModal
+                        userId={user.id}
+                        onClose={() => setShowCreateModal(false)}
+                        onSuccess={() => {
+                            setShowCreateModal(false);
+                            if (fetchDataRef.current) fetchDataRef.current();
+                        }}
+                    />
+                )
+            }
 
-            {showSettingsModal && (
-                <ProfileSettingsModal
-                    userId={user.id}
-                    currentUsername={profileData.username}
-                    currentBio={profileData.bio}
-                    currentLocation={profileData.location}
-                    currentBirthYear={profileData.birth_year}
-                    currentVisibility={visibility}
-                    currentIsPrivate={profileData.is_private}
-                    onClose={() => setShowSettingsModal(false)}
-                    onSave={() => {
-                        if (fetchDataRef.current) fetchDataRef.current();
-                    }}
-                />
-            )}
-        </MobileContainer>
+            {
+                showSettingsModal && (
+                    <ProfileSettingsModal
+                        userId={user.id}
+                        currentUsername={profileData.username}
+                        currentBio={profileData.bio}
+                        currentLocation={profileData.location}
+                        currentBirthYear={profileData.birth_year}
+                        currentVisibility={visibility}
+                        currentIsPrivate={profileData.is_private}
+                        onClose={() => setShowSettingsModal(false)}
+                        onSave={() => {
+                            if (fetchDataRef.current) fetchDataRef.current();
+                        }}
+                    />
+                )
+            }
+        </MobileContainer >
     );
 }
