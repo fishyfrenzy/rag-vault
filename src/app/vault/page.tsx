@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase/client";
 import { VaultItemCard } from "@/components/vault/VaultItemCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Filter, CheckCircle } from "lucide-react";
+import { Search, Filter, CheckCircle, Plus } from "lucide-react";
 import Link from "next/link";
 import { SkeletonCardGrid } from "@/components/ui/skeleton";
 
@@ -67,7 +67,12 @@ export default function VaultPage() {
             <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border/40 px-6 py-4 space-y-4">
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold">The Vault</h1>
-                    <span className="text-sm text-muted-foreground">{items.length} items</span>
+                    <Link href="/vault/new">
+                        <Button size="sm" className="gap-2">
+                            <Plus className="w-4 h-4" />
+                            Add Item
+                        </Button>
+                    </Link>
                 </div>
 
                 {/* Search */}
@@ -127,7 +132,7 @@ export default function VaultPage() {
                 <div className="py-12 text-center text-muted-foreground space-y-4">
                     <p>No items found.</p>
                     <Button variant="outline" asChild>
-                        <Link href="/sell">Add the first entry</Link>
+                        <Link href="/vault/new">Add the first entry</Link>
                     </Button>
                 </div>
             )}
