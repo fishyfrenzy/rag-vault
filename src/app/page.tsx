@@ -1,9 +1,39 @@
 import { MobileContainer } from "@/components/layout/MobileContainer";
 import { Button } from "@/components/ui/button";
 import { ActivityTicker } from "@/components/activity/ActivityTicker";
+import { HomeAuthButton } from "@/components/home/HomeAuthButton";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase/client"; // Note: In server components we often use createClient from utils, but for public read accessible tables client is often fine or we use fetch. 
+// Actually, standard pattern often involves checking if it's a server component. 
+// However, since we are just doing a public read, we can use a direct fetch or the supabase client if configured for server (or just client side fetch if we converted to "use client", but I said I'd keep it server).
+// Let's use the standard server-side fetching pattern if possible, or just standard fetching. 
+// Wait, `src/app/page.tsx` is server by default. I need to make it async.
 
-export default function Home() {
+// Let's use the provided supabase client or just use standard fetch if needed.
+// IMPORTANT: `import { supabase } from "@/lib/supabase/client"` is a client-side initialized client usually.
+// For server components, we usually use `createClient` from `@supabase/supabase-js` or a helper.
+// I will use a simple fetch wrapper or use the existing client if it works (it might complain about missing storage if it uses local storage).
+// Better to simple fetch for public data or use a server-safe client.
+// I'll check `src/lib/supabase/server.ts` if it exists. (Verified in step 1138 summary it exists).
+
+import { createClient } from "@/lib/supabase/server";
+
+export const revalidate = 60; // Revalidate every 60 seconds
+
+export default async function Home() {
+  const supabase = await createClient(); // Await if createClient is async, but checking server.ts standard pattern usually it's sync or async. 
+  // Wait, in previous step 1138 summary, it says "createClient function for server-side Supabase interactions".
+  // Let's assume it might return a Promise safely or just await it to be sure if using the latest Next.js helpers.
+  // Actually, checked standard Next.js supabase auth helpers, createServerClient often needs cookies() which is async in newer Next.js.
+  // If lint says "Property 'from' does not exist on type 'Promise...'", then `createClient()` returns a Promise. So I MUST await it.
+
+  // Fetch fresh items
+  const { data: freshItems } = await supabase
+    .from('the_vault')
+    .select('id, subject, category, reference_image_url, year')
+    .order('created_at', { ascending: false })
+    .limit(8);
+
   return (
     <MobileContainer className="pb-20">
       {/* Hero Section */}
@@ -32,11 +62,7 @@ export default function Home() {
                   Explore the Vault
                 </Button>
               </Link>
-              <Link href="/login">
-                <Button size="lg" variant="outline" className="rounded-full px-8 md:px-12 md:h-14 md:text-lg backdrop-blur-sm bg-background/50">
-                  Sign In
-                </Button>
-              </Link>
+              <HomeAuthButton />
             </div>
 
             {/* Mobile Activity Ticker - Hero variant (below buttons) */}
@@ -74,19 +100,41 @@ export default function Home() {
           <h3 className="font-semibold text-lg md:text-2xl">Fresh to the Vault</h3>
         </div>
 
-        {/* Mock Grid - Responsive Columns */}
+        {/* Fresh Grid - Real Data */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-            <div key={i} className="space-y-2 group cursor-pointer">
-              <div className="aspect-square bg-secondary rounded-xl overflow-hidden">
-                <div className="w-full h-full bg-muted/20 group-hover:bg-muted/40 transition-colors" />
+          {freshItems?.map((item: any) => (
+            <Link key={item.id} href={`/vault/${item.id}`}>
+              <div className="space-y-2 group cursor-pointer">
+                <div className="aspect-square bg-secondary rounded-xl overflow-hidden border border-border/50 relative">
+                  {item.reference_image_url ? (
+                    <img
+                      src={item.reference_image_url}
+                      alt={item.subject}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-4xl bg-secondary/50">
+                      👕
+                    </div>
+                  )}
+
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                </div>
+                <div className="px-1">
+                  <p className="font-medium text-sm md:text-base line-clamp-1">{item.subject}</p>
+                  <p className="text-xs text-muted-foreground md:text-sm">
+                    {item.year ? item.year.toString().split(',')[0] : 'Unknown'} · {item.category}
+                  </p>
+                </div>
               </div>
-              <div className="px-1">
-                <p className="font-medium text-sm md:text-base">Harley Davidson</p>
-                <p className="text-xs text-muted-foreground md:text-sm">$120 · L</p>
-              </div>
-            </div>
+            </Link>
           ))}
+
+          {(!freshItems || freshItems.length === 0) && (
+            <div className="col-span-full py-12 text-center text-muted-foreground">
+              No items in the vault yet. Be the first!
+            </div>
+          )}
         </div>
       </section>
     </MobileContainer>
