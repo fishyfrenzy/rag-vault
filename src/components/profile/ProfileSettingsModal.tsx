@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X, Settings, Eye, EyeOff, Lock, Globe, Check, Loader2, AtSign } from "lucide-react";
+import { X, Settings, Eye, EyeOff, Lock, Globe, Check, Loader2, Ticket, Copy } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ProfileVisibility {
@@ -46,6 +46,8 @@ export function ProfileSettingsModal({
     const [checkingUsername, setCheckingUsername] = useState(false);
     const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
     const [usernameError, setUsernameError] = useState<string | null>(null);
+    const [inviteCodes, setInviteCodes] = useState<{ code: string; used: boolean }[]>([]);
+    const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
     // Validate username format
     const isValidUsername = (name: string) => {
@@ -98,6 +100,27 @@ export function ProfileSettingsModal({
 
         return () => clearTimeout(timer);
     }, [username, checkUsername]);
+
+    // Fetch invite codes
+    useEffect(() => {
+        const fetchInviteCodes = async () => {
+            const { data } = await supabase
+                .from('invite_codes')
+                .select('code, used_by')
+                .eq('created_by', userId);
+
+            if (data) {
+                setInviteCodes(data.map(c => ({ code: c.code, used: !!c.used_by })));
+            }
+        };
+        fetchInviteCodes();
+    }, [userId]);
+
+    const copyCode = (code: string) => {
+        navigator.clipboard.writeText(code);
+        setCopiedCode(code);
+        setTimeout(() => setCopiedCode(null), 2000);
+    };
 
     const toggleVisibility = (field: keyof ProfileVisibility) => {
         setVisibility(prev => ({ ...prev, [field]: !prev[field] }));
@@ -330,6 +353,54 @@ export function ProfileSettingsModal({
                             </button>
                         </div>
                     </div>
+
+                    {/* Invite Codes Section */}
+                    {inviteCodes.length > 0 && (
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                <Ticket className="w-4 h-4" />
+                                Your Invite Codes
+                            </h3>
+                            <div className="space-y-2">
+                                {inviteCodes.map((invite) => (
+                                    <div
+                                        key={invite.code}
+                                        className={cn(
+                                            "p-3 rounded-xl border flex items-center justify-between",
+                                            invite.used
+                                                ? "border-border/30 bg-secondary/20 opacity-50"
+                                                : "border-primary/30 bg-primary/5"
+                                        )}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-mono text-lg tracking-widest font-bold">
+                                                {invite.code}
+                                            </span>
+                                            {invite.used && (
+                                                <span className="text-xs text-muted-foreground">(Used)</span>
+                                            )}
+                                        </div>
+                                        {!invite.used && (
+                                            <button
+                                                type="button"
+                                                onClick={() => copyCode(invite.code)}
+                                                className="p-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
+                                            >
+                                                {copiedCode === invite.code ? (
+                                                    <Check className="w-4 h-4 text-green-500" />
+                                                ) : (
+                                                    <Copy className="w-4 h-4 text-muted-foreground" />
+                                                )}
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Share these codes with friends to invite them to Ragvault!
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Footer */}
