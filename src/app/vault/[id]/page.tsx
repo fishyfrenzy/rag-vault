@@ -22,11 +22,33 @@ import {
 } from "lucide-react";
 import { IsoButton } from "@/components/profile/IsoList";
 
+const getFlagEmoji = (countryName: string) => {
+    if (!countryName) return "🌍";
+    const code = countryName.toLowerCase();
+    if (code === "usa" || code === "united states" || code === "america") return "🇺🇸";
+    if (code === "uk" || code === "united kingdom" || code === "england" || code === "great britain") return "🇬🇧";
+    if (code === "canada") return "🇨🇦";
+    if (code === "mexico") return "🇲🇽";
+    if (code === "japan") return "🇯🇵";
+    if (code === "china") return "🇨🇳";
+    if (code === "france") return "🇫🇷";
+    if (code === "italy") return "🇮🇹";
+    if (code === "germany") return "🇩🇪";
+    if (code === "haiti") return "🇭🇹";
+    if (code === "el salvador") return "🇸🇻";
+    if (code === "honduras") return "🇭🇳";
+    if (code === "pakistan") return "🇵🇰";
+    if (code === "india") return "🇮🇳";
+    if (code === "ireland") return "🇮🇪";
+    if (code === "australia") return "🇦🇺";
+    return "🌍";
+};
+
 interface VaultItem {
     id: string;
     subject: string;
     category: string;
-    year: number | null;
+    year: string | null;
     tag_brand: string | null;
     stitch_type: string | null;
     material: string | null;
@@ -300,7 +322,7 @@ export default function VaultItemPage() {
                             )}
                             {item.origin && (
                                 <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border/50">
-                                    <span className="text-sm font-medium">🌍 {item.origin}</span>
+                                    <span className="text-sm font-medium">{getFlagEmoji(item.origin)} {item.origin}</span>
                                 </div>
                             )}
                         </div>
@@ -426,6 +448,7 @@ export default function VaultItemPage() {
                         category: item.category,
                         year: item.year,
                         tag_brand: item.tag_brand,
+                        reference_image_url: item.reference_image_url,
                     }}
                     onClose={() => setShowEditModal(false)}
                     onSuccess={() => {

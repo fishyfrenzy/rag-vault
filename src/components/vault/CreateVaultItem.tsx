@@ -76,7 +76,7 @@ export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }:
             .insert({
                 subject,
                 category,
-                year: parseInt(year),
+                year: year || null,
                 tag_brand: tagBrand ? tagBrand.split(',').map(t => t.trim()) : null,
                 stitch_type: stitchType || null,
                 origin: origin || null,
@@ -151,13 +151,11 @@ export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }:
                             </select>
                         </div>
                         <div className="space-y-2">
-                            <FormLabel required>Year</FormLabel>
+                            <FormLabel>Year (or Range)</FormLabel>
                             <Input
-                                type="number"
                                 value={year}
                                 onChange={(e) => setYear(e.target.value)}
-                                placeholder="e.g. 1991"
-                                required
+                                placeholder="e.g. 1988 or 1988-1991"
                                 className="bg-background/50"
                             />
                         </div>

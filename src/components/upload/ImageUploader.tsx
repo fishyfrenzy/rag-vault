@@ -117,7 +117,10 @@ export function ImageUploader({
                     <div>
                         <p className="font-medium">Drop photos here or tap to upload</p>
                         <p className="text-sm text-muted-foreground mt-1">
-                            Minimum {minImages} photos (front &amp; back required)
+                            {minImages > 1
+                                ? `Minimum ${minImages} photos (front & back required)`
+                                : "Upload a photo"
+                            }
                         </p>
                     </div>
                 </div>

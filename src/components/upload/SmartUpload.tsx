@@ -42,11 +42,12 @@ interface SmartUploadProps {
     userId: string;
     onComplete: (vaultItemId: string, imageUrls: string[]) => void;
     onCancel: () => void;
+    embedded?: boolean;
 }
 
 type Step = "upload" | "analyzing" | "matches" | "confirm" | "saving" | "error";
 
-export function SmartUpload({ userId, onComplete, onCancel }: SmartUploadProps) {
+export function SmartUpload({ userId, onComplete, onCancel, embedded = false }: SmartUploadProps) {
     const [step, setStep] = useState<Step>("upload");
     const [images, setImages] = useState<File[]>([]);
     const [imageUrls, setImageUrls] = useState<string[]>([]);
@@ -100,6 +101,13 @@ export function SmartUpload({ userId, onComplete, onCancel }: SmartUploadProps) 
         try {
             // Upload to Supabase Storage first
             const urls = await uploadImages();
+
+            // If embedded, we skip analysis matching and just return the URLs to the parent
+            if (embedded) {
+                onComplete("", urls);
+                return;
+            }
+
             setImageUrls(urls);
 
             // Call analysis API
@@ -208,17 +216,21 @@ export function SmartUpload({ userId, onComplete, onCancel }: SmartUploadProps) 
     };
 
     return (
-        <div className="space-y-6">
+        <div className={embedded ? "space-y-4" : "space-y-6"}>
             {step === "upload" && (
                 <>
                     <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                            <Sparkles className="w-5 h-5 text-primary" />
-                            <h2 className="text-xl font-bold">Smart Upload</h2>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                            Upload photos and AI will identify your shirt automatically.
-                        </p>
+                        {!embedded && (
+                            <div className="flex items-center gap-2">
+                                <Sparkles className="w-5 h-5 text-primary" />
+                                <h2 className="text-xl font-bold">Smart Upload</h2>
+                            </div>
+                        )}
+                        {!embedded && (
+                            <p className="text-sm text-muted-foreground">
+                                Upload photos and AI will identify your shirt automatically.
+                            </p>
+                        )}
                     </div>
 
                     <ImageUploader
@@ -234,10 +246,19 @@ export function SmartUpload({ userId, onComplete, onCancel }: SmartUploadProps) 
                         <Button
                             className="flex-1"
                             onClick={analyzeImages}
-                            disabled={images.length < 2}
+                            disabled={images.length < (embedded ? 1 : 2)}
                         >
-                            <Sparkles className="w-4 h-4 mr-2" />
-                            Analyze Photos
+                            {embedded ? (
+                                <>
+                                    <Check className="w-4 h-4 mr-2" />
+                                    Use This Image
+                                </>
+                            ) : (
+                                <>
+                                    <Sparkles className="w-4 h-4 mr-2" />
+                                    Analyze Photos
+                                </>
+                            )}
                         </Button>
                     </div>
                 </>
