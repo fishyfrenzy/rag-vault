@@ -61,6 +61,7 @@ interface VaultItem {
     score: number;
     created_at: string;
     created_by: string | null;
+    description: string | null;
 }
 
 interface Contribution {
@@ -293,9 +294,13 @@ export default function VaultItemPage() {
                         {/* Attribute Pills */}
                         <div className="flex flex-wrap gap-2">
                             {item.year && (
-                                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border/50">
-                                    <Calendar className="w-4 h-4 text-primary" />
-                                    <span className="text-sm font-medium">{item.year}</span>
+                                <div className="flex flex-wrap gap-2">
+                                    {item.year.toString().split(',').map((y) => (
+                                        <div key={y} className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border/50 hover:bg-secondary/70 transition-colors cursor-default">
+                                            <Calendar className="w-4 h-4 text-primary" />
+                                            <span className="text-sm font-medium">{y.trim()}</span>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
                             {item.tag_brand && (
@@ -326,6 +331,18 @@ export default function VaultItemPage() {
                                 </div>
                             )}
                         </div>
+
+                        {/* Description */}
+                        {item.description && (
+                            <div className="space-y-2 pt-2">
+                                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                                    Description
+                                </h3>
+                                <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                                    {item.description}
+                                </p>
+                            </div>
+                        )}
 
                         {/* Stats Card */}
                         <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 backdrop-blur-sm">
