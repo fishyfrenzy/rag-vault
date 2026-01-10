@@ -4,7 +4,8 @@ import React, { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Image as ImageIcon } from "lucide-react";
+import { ImageUploader } from "@/components/upload/ImageUploader";
 
 function FormLabel({ children, required }: { children: React.ReactNode, required?: boolean }) {
     return (
@@ -49,6 +50,7 @@ export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }:
     const [subject, setSubject] = useState(initialSubject);
     const [category, setCategory] = useState("Music");
     const [year, setYear] = useState("");
+    const [imageFile, setImageFile] = useState<File | null>(null);
 
     // Garment Details (Optional)
     const [garmentType, setGarmentType] = useState("t-shirt");
@@ -71,26 +73,48 @@ export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }:
 
         setLoading(true);
 
-        const { data, error } = await supabase
-            .from('the_vault')
-            .insert({
-                subject,
-                category,
-                year: year || null,
-                tag_brand: tagBrand ? tagBrand.split(',').map(t => t.trim()) : null,
-                stitch_type: stitchType || null,
-                origin: origin || null,
-                body_type: garmentType || null,
-                created_by: userId || null,
-                description: description || null,
-            })
-            .select()
-            .single();
+        try {
+            let referenceImageUrl = null;
 
-        if (error) {
-            console.error(error);
-            alert("Error creating item: " + error.message);
-        } else {
+            // Upload Image if present
+            if (imageFile && userId) {
+                const fileExt = imageFile.name.split('.').pop();
+                const filePath = `${userId}/${Date.now()}/reference.${fileExt}`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('shirt-images')
+                    .upload(filePath, imageFile);
+
+                if (uploadError) throw uploadError;
+
+                const { data: urlData } = supabase.storage
+                    .from('shirt-images')
+                    .getPublicUrl(filePath);
+
+                referenceImageUrl = urlData.publicUrl;
+            }
+
+            const { data, error } = await supabase
+                .from('the_vault')
+                .insert({
+                    subject,
+                    category,
+                    year: year || null,
+                    tag_brand: tagBrand ? tagBrand.split(',').map(t => t.trim()) : null,
+                    stitch_type: stitchType || null,
+                    origin: origin || null,
+                    body_type: garmentType || null,
+                    created_by: userId || null,
+                    description: description || null,
+                    reference_image_url: referenceImageUrl,
+                })
+                .select()
+                .single();
+
+            if (error) {
+                throw error;
+            }
+
             // Add contribution for creating a vault entry
             if (userId) {
                 await supabase.from('contributions').insert({
@@ -101,8 +125,13 @@ export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }:
                 });
             }
             onSuccess(data);
+
+        } catch (error: any) {
+            console.error(error);
+            alert("Error creating item: " + (error.message || "Unknown error"));
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     return (
@@ -151,16 +180,30 @@ export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }:
                             </select>
                         </div>
                         <div className="space-y-2">
-                            <FormLabel>Year (or Range)</FormLabel>
+                            <FormLabel>Year(s)</FormLabel>
                             <Input
                                 value={year}
                                 onChange={(e) => setYear(e.target.value)}
-                                placeholder="e.g. 1988 or 1988-1991"
+                                placeholder="e.g. 1988, 1991 or 1988-1991"
                                 className="bg-background/50"
                             />
                         </div>
                     </div>
                 </div>
+
+                {/* Main Image */}
+                <CollapsibleSection title="Main Reference Image" defaultOpen>
+                    <div className="space-y-4">
+                        <p className="text-sm text-muted-foreground">
+                            Upload a clear photo of the shirt (front view preferred) to serve as the main reference image.
+                        </p>
+                        <ImageUploader
+                            onImagesReady={(files) => setImageFile(files[0])}
+                            minImages={1}
+                            maxImages={1}
+                        />
+                    </div>
+                </CollapsibleSection>
 
                 {/* Garment Details - Optional */}
                 <CollapsibleSection title="Garment Details">
