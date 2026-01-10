@@ -201,14 +201,37 @@ export default function ReviewPage() {
 
                         {/* Change Preview */}
                         <div className="bg-secondary/30 rounded-lg p-3 space-y-2">
-                            <p className="text-sm font-medium capitalize">{proposal.field_name.replace("_", " ")}</p>
-                            <div className="flex items-center gap-2 text-sm">
-                                <span className="text-muted-foreground line-through">
-                                    {proposal.old_value || "(empty)"}
-                                </span>
-                                <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                                <span className="text-green-500 font-medium">{proposal.new_value}</span>
-                            </div>
+                            <p className="text-sm font-medium capitalize">{proposal.field_name.replace(/_/g, " ")}</p>
+
+                            {proposal.field_name === "reference_image_url" ? (
+                                <div className="flex items-center gap-4">
+                                    <div className="space-y-1">
+                                        <p className="text-xs text-muted-foreground">Original</p>
+                                        <div className="w-16 h-20 bg-black/20 rounded overflow-hidden">
+                                            {proposal.old_value ? (
+                                                <img src={proposal.old_value} alt="Old" className="w-full h-full object-cover opacity-60" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">None</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                                    <div className="space-y-1">
+                                        <p className="text-xs text-green-500 font-medium">New</p>
+                                        <div className="w-16 h-20 bg-black/20 rounded overflow-hidden border-2 border-green-500/30">
+                                            <img src={proposal.new_value} alt="New" className="w-full h-full object-cover" />
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2 text-sm">
+                                    <span className="text-muted-foreground line-through truncate max-w-[100px]">
+                                        {proposal.old_value || "(empty)"}
+                                    </span>
+                                    <ArrowRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                    <span className="text-green-500 font-medium break-all">{proposal.new_value}</span>
+                                </div>
+                            )}
                         </div>
 
                         {/* Actions */}
