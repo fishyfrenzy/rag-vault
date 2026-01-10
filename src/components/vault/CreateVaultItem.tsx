@@ -82,6 +82,7 @@ export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }:
                 origin: origin || null,
                 body_type: garmentType || null,
                 created_by: userId || null,
+                description: description || null,
             })
             .select()
             .single();
