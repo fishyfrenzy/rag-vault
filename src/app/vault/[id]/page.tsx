@@ -259,18 +259,18 @@ export default function VaultItemPage() {
                             </div>
                         </div>
 
-                        {/* Thumbnail placeholder for future multiple images */}
+                        {/* Thumbnail placeholder - Hidden as requested until multiple images are supported
                         <div className="hidden lg:flex gap-2">
                             <div className="w-16 h-16 rounded-lg bg-secondary/50 border-2 border-primary/50 overflow-hidden">
                                 {item.reference_image_url && (
                                     <img src={item.reference_image_url} alt="" className="w-full h-full object-cover" />
                                 )}
                             </div>
-                            {/* Placeholder thumbnails */}
                             <div className="w-16 h-16 rounded-lg bg-secondary/30 border border-dashed border-border/50 flex items-center justify-center">
                                 <span className="text-xs text-muted-foreground">+</span>
                             </div>
                         </div>
+                        */}
                     </div>
 
                     {/* Info Section */}
@@ -294,13 +294,18 @@ export default function VaultItemPage() {
                         {/* Attribute Pills */}
                         <div className="flex flex-wrap gap-2">
                             {item.year && (
-                                <div className="flex flex-wrap gap-2">
-                                    {item.year.toString().split(',').map((y) => (
-                                        <div key={y} className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border/50 hover:bg-secondary/70 transition-colors cursor-default">
-                                            <Calendar className="w-4 h-4 text-primary" />
-                                            <span className="text-sm font-medium">{y.trim()}</span>
-                                        </div>
-                                    ))}
+                                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border/50">
+                                    <Calendar className="w-4 h-4 text-primary" />
+                                    <span className="text-sm font-medium">
+                                        {(() => {
+                                            const yearStr = item.year.toString();
+                                            const numbers = yearStr.match(/\d{4}/g)?.map(Number) || [];
+                                            if (numbers.length === 0) return yearStr;
+                                            const min = Math.min(...numbers);
+                                            const max = Math.max(...numbers);
+                                            return min === max ? `${min}` : `${min} - ${max}`;
+                                        })()}
+                                    </span>
                                 </div>
                             )}
                             {item.tag_brand && (
