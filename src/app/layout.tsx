@@ -19,8 +19,8 @@ export const metadata: Metadata = {
     title: "Ragvault",
   },
   icons: {
-    icon: "/logo-wheel.png",
-    apple: "/logo-wheel.png",
+    icon: "/favicon.png",
+    apple: "/favicon.png",
   },
 };
 
@@ -44,7 +44,7 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <link rel="apple-touch-icon" href="/logo-wheel.png" />
+        <link rel="apple-touch-icon" href="/favicon.png" />
       </head>
       <body className={inter.className}>
         <AuthProvider>
