@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://www.ragvault.io/sitemap.xml
+
+# Crawl-delay (be nice to crawlers)
+Crawl-delay: 1
+
+# Block non-content pages
+Disallow: /api/
+Disallow: /auth/
+Disallow: /onboarding
+Disallow: /_next/

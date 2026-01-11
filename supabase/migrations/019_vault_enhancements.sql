@@ -61,11 +61,13 @@ CREATE TABLE IF NOT EXISTS related_shirts (
     score INTEGER DEFAULT 0, -- upvotes - downvotes
     status TEXT DEFAULT 'approved' CHECK (status IN ('pending', 'approved', 'rejected')),
     created_at TIMESTAMPTZ DEFAULT now(),
-    -- Prevent duplicates (A-B is same as B-A)
-    CONSTRAINT unique_shirt_pair UNIQUE (LEAST(shirt_a_id, shirt_b_id), GREATEST(shirt_a_id, shirt_b_id)),
     -- Can't relate a shirt to itself
     CONSTRAINT different_shirts CHECK (shirt_a_id != shirt_b_id)
 );
+
+-- Unique index to prevent duplicates (A-B is same as B-A)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_related_shirts_unique_pair 
+    ON related_shirts (LEAST(shirt_a_id, shirt_b_id), GREATEST(shirt_a_id, shirt_b_id));
 
 -- Indexes for related shirt queries
 CREATE INDEX IF NOT EXISTS idx_related_a ON related_shirts(shirt_a_id, score DESC);
@@ -224,3 +226,19 @@ CREATE TRIGGER vault_creation_log
 GRANT EXECUTE ON FUNCTION log_vault_history TO authenticated;
 GRANT EXECUTE ON FUNCTION vote_related_shirt TO authenticated;
 GRANT EXECUTE ON FUNCTION get_related_shirts TO authenticated, anon;
+
+-- =====================================================
+-- 7. BACKFILL HISTORY FOR EXISTING ITEMS
+-- =====================================================
+INSERT INTO vault_history (vault_item_id, user_id, action, new_value, created_at)
+SELECT 
+    id as vault_item_id,
+    created_by as user_id,
+    'created' as action,
+    subject as new_value,
+    created_at
+FROM the_vault
+WHERE NOT EXISTS (
+    SELECT 1 FROM vault_history vh 
+    WHERE vh.vault_item_id = the_vault.id AND vh.action = 'created'
+);
