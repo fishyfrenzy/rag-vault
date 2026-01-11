@@ -48,7 +48,8 @@ interface CreateVaultItemProps {
 
 export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }: CreateVaultItemProps) {
     // Core Information (Required)
-    const [subject, setSubject] = useState(initialSubject);
+    const [brand, setBrand] = useState("");
+    const [title, setTitle] = useState(initialSubject || "");
     const [category, setCategory] = useState("Music");
     const [years, setYears] = useState<string[]>([]);
     const [imageFile, setImageFile] = useState<File | null>(null);
@@ -70,8 +71,8 @@ export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }:
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!subject.trim() || !category) {
-            alert("Please fill all required fields.");
+        if (!brand.trim() || !title.trim() || !category) {
+            alert("Please fill all required fields (Brand, Title, Category).");
             return;
         }
 
@@ -101,7 +102,9 @@ export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }:
             const { data, error } = await supabase
                 .from('the_vault')
                 .insert({
-                    subject,
+                    brand: brand.trim(),
+                    title: title.trim(),
+                    subject: `${brand.trim()} ${title.trim()}`, // Keep subject as computed for backwards compatibility
                     category,
                     year: years.length > 0 ? years.join(', ') : null,
                     tag_brand: tagBrands.length > 0 ? tagBrands : null,
@@ -160,14 +163,27 @@ export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }:
                     </div>
 
                     <div className="space-y-2">
-                        <FormLabel required>Subject / Band Name</FormLabel>
+                        <FormLabel required>Brand / Artist</FormLabel>
                         <Input
-                            value={subject}
-                            onChange={(e) => setSubject(e.target.value)}
+                            value={brand}
+                            onChange={(e) => setBrand(e.target.value)}
                             required
-                            placeholder="e.g. Metallica, Harley-Davidson"
+                            placeholder="e.g. Nirvana, Harley-Davidson, Nike"
                             className="bg-background/50"
                         />
+                        <p className="text-xs text-muted-foreground">The main entity featured on the shirt</p>
+                    </div>
+
+                    <div className="space-y-2">
+                        <FormLabel required>Title</FormLabel>
+                        <Input
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            required
+                            placeholder="e.g. Heart Shaped Box, In Utero Tour"
+                            className="bg-background/50"
+                        />
+                        <p className="text-xs text-muted-foreground">The specific design or tour name</p>
                     </div>
 
                     <div className="space-y-2">

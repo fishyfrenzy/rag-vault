@@ -7,6 +7,8 @@ import VaultItemClient from "./VaultItemClient";
 interface VaultItem {
     id: string;
     subject: string;
+    brand: string | null;
+    title: string | null;
     category: string;
     year: string | null;
     tag_brand: string | null;

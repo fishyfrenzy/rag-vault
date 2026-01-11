@@ -49,6 +49,8 @@ const getFlagEmoji = (countryName: string) => {
 interface VaultItem {
     id: string;
     subject: string;
+    brand: string | null;
+    title: string | null;
     category: string;
     year: string | null;
     tag_brand: string | null;
@@ -232,7 +234,19 @@ export default function VaultItemClient({ initialItem }: VaultItemClientProps) {
                     {/* Details */}
                     <div className="space-y-6">
                         <div>
-                            <h1 className="text-2xl font-bold mb-2">{item.subject}</h1>
+                            {item.brand ? (
+                                <>
+                                    <a
+                                        href={`/vault?brand=${encodeURIComponent(item.brand)}`}
+                                        className="text-sm font-medium text-primary hover:underline uppercase tracking-wider"
+                                    >
+                                        {item.brand}
+                                    </a>
+                                    <h1 className="text-2xl font-bold mt-1">{item.title || item.subject}</h1>
+                                </>
+                            ) : (
+                                <h1 className="text-2xl font-bold mb-2">{item.subject}</h1>
+                            )}
                             <VoteButtons
                                 targetType="vault_item"
                                 targetId={item.id}
