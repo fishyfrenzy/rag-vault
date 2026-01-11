@@ -6,6 +6,7 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { Navbar } from "@/components/layout/Navbar";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { FeedbackButton } from "@/components/feedback/FeedbackButton";
+import { QueryProvider } from "@/components/providers/QueryProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -47,14 +48,17 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/favicon.png" />
       </head>
       <body className={inter.className}>
-        <AuthProvider>
-          <Navbar />
-          {children}
-          <BottomNav />
-          <FeedbackButton />
-        </AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <Navbar />
+            {children}
+            <BottomNav />
+            <FeedbackButton />
+          </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   );
 }
+
 
