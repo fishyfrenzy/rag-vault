@@ -10,7 +10,7 @@
 CREATE INDEX IF NOT EXISTS idx_inventory_vault ON user_inventory(vault_id);
 CREATE INDEX IF NOT EXISTS idx_edit_proposals_user ON edit_proposals(user_id);
 CREATE INDEX IF NOT EXISTS idx_contributions_vault ON contributions(vault_item_id);
-CREATE INDEX IF NOT EXISTS idx_activity_feed_actor ON activity_feed(actor_id);
+CREATE INDEX IF NOT EXISTS idx_activity_feed_actor ON activity_feed(user_id);
 CREATE INDEX IF NOT EXISTS idx_votes_target_id ON votes(target_id);
 
 -- =====================================================

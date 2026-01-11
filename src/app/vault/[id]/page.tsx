@@ -18,9 +18,17 @@ import {
     Clock,
     Edit,
     Sparkles,
-    Link2
+    Link2,
+    History,
+    GitBranch,
+    ChevronDown,
+    ChevronUp
 } from "lucide-react";
 import { IsoButton } from "@/components/profile/IsoList";
+import { ItemHistory } from "@/components/vault/ItemHistory";
+import { VariantsSection } from "@/components/vault/VariantCard";
+import { RelatedShirts } from "@/components/vault/RelatedShirts";
+import { SuggestRelatedModal } from "@/components/vault/SuggestRelatedModal";
 
 const getFlagEmoji = (countryName: string) => {
     if (!countryName) return "🌍";
@@ -63,6 +71,21 @@ interface VaultItem {
     created_by: string | null;
     description: string | null;
     tags: string[] | null;
+    parent_id: string | null;
+    variant_type: string | null;
+}
+
+interface VariantItem {
+    id: string;
+    subject: string;
+    variant_type: string | null;
+    reference_image_url: string | null;
+}
+
+interface ParentShirt {
+    id: string;
+    subject: string;
+    reference_image_url: string | null;
 }
 
 interface Contribution {
@@ -85,6 +108,10 @@ export default function VaultItemPage() {
     const [verifying, setVerifying] = useState(false);
     const [hasVerified, setHasVerified] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showRelatedModal, setShowRelatedModal] = useState(false);
+    const [variants, setVariants] = useState<VariantItem[]>([]);
+    const [parentShirt, setParentShirt] = useState<ParentShirt | null>(null);
+    const [showHistory, setShowHistory] = useState(false);
 
     const fetchItemRef = React.useRef<() => Promise<void>>(undefined);
     const fetchContributionsRef = React.useRef<() => Promise<void>>(undefined);
@@ -133,15 +160,51 @@ export default function VaultItemPage() {
             setHasVerified((data && data.length > 0) ?? false);
         };
 
+        const fetchVariants = async () => {
+            // Fetch child variants
+            const { data: childVariants } = await supabase
+                .from("the_vault")
+                .select("id, subject, variant_type, reference_image_url")
+                .eq("parent_id", params.id)
+                .limit(10);
+            setVariants((childVariants as VariantItem[]) || []);
+        };
+
+        const fetchParentShirt = async (parentId: string) => {
+            const { data } = await supabase
+                .from("the_vault")
+                .select("id, subject, reference_image_url")
+                .eq("id", parentId)
+                .single();
+            if (data) setParentShirt(data as ParentShirt);
+        };
+
         fetchItemRef.current = fetchItem;
         fetchContributionsRef.current = fetchContributions;
 
         if (params.id) {
-            fetchItem();
+            fetchItem().then(() => {
+                // After item loads, fetch parent if this is a variant
+            });
             fetchContributions();
             checkUserVerification();
+            fetchVariants();
         }
     }, [params.id, user]);
+
+    // Fetch parent if item has parent_id
+    useEffect(() => {
+        if (item?.parent_id) {
+            supabase
+                .from("the_vault")
+                .select("id, subject, reference_image_url")
+                .eq("id", item.parent_id)
+                .single()
+                .then(({ data }) => {
+                    if (data) setParentShirt(data as ParentShirt);
+                });
+        }
+    }, [item?.parent_id]);
 
     const refreshData = () => {
         fetchItemRef.current?.();
@@ -369,7 +432,40 @@ export default function VaultItemPage() {
                             </div>
                         )}
 
-                        {/* Stats Card */}
+                        {/* Variants Section */}
+                        <VariantsSection variants={variants} parentShirt={parentShirt} />
+
+                        {/* Related Shirts */}
+                        <div className="space-y-3 pt-2">
+                            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                                <Link2 className="w-4 h-4" />
+                                Related Shirts
+                            </h3>
+                            <RelatedShirts
+                                vaultItemId={item.id}
+                                onSuggestClick={() => setShowRelatedModal(true)}
+                            />
+                        </div>
+
+                        {/* Item History */}
+                        <div className="space-y-2 pt-2">
+                            <button
+                                onClick={() => setShowHistory(!showHistory)}
+                                className="w-full flex items-center justify-between text-sm font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
+                            >
+                                <span className="flex items-center gap-2">
+                                    <History className="w-4 h-4" />
+                                    Item History
+                                </span>
+                                {showHistory ? (
+                                    <ChevronUp className="w-4 h-4" />
+                                ) : (
+                                    <ChevronDown className="w-4 h-4" />
+                                )}
+                            </button>
+                            {showHistory && <ItemHistory vaultItemId={item.id} />}
+                        </div>
+
                         <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 backdrop-blur-sm">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-6">
@@ -496,6 +592,19 @@ export default function VaultItemPage() {
                     onSuccess={() => {
                         setShowEditModal(false);
                         refreshData();
+                    }}
+                />
+            )}
+
+            {/* Suggest Related Modal */}
+            {showRelatedModal && item && (
+                <SuggestRelatedModal
+                    vaultItemId={item.id}
+                    vaultItemSubject={item.subject}
+                    onClose={() => setShowRelatedModal(false)}
+                    onSuccess={() => {
+                        setShowRelatedModal(false);
+                        // Related shirts will auto-refresh
                     }}
                 />
             )}
