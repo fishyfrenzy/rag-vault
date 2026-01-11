@@ -103,10 +103,11 @@ export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }:
 
             setIsSearching(true);
             // Search by subject (brand + title combined) for more flexible matching
+            const searchQuery = `${searchTerm} ${title.trim()}`.trim();
             const { data } = await supabase
                 .from("the_vault")
                 .select("id, brand, title, subject, reference_image_url")
-                .ilike("subject", `%${searchTerm}%`)
+                .ilike("subject", `%${searchQuery}%`)
                 .limit(5);
 
             setMatchedItems((data as MatchedItem[]) || []);
@@ -114,7 +115,7 @@ export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }:
         }, 300);
 
         return () => clearTimeout(searchTimeout);
-    }, [brand]);
+    }, [brand, title]);
 
     const handleSelectAsVariant = (item: MatchedItem) => {
         setSelectedParent(item);
@@ -286,42 +287,6 @@ export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }:
                             )}
                         </div>
                         <p className="text-xs text-muted-foreground">The main entity featured on the shirt</p>
-
-                        {/* Match Suggestions */}
-                        {matchedItems.length > 0 && !variantMode && (
-                            <div className="mt-2 p-3 bg-secondary/30 rounded-lg border border-border/50 space-y-2">
-                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                                    Similar items in vault
-                                </p>
-                                {matchedItems.map((item) => (
-                                    <div
-                                        key={item.id}
-                                        className="flex items-center justify-between gap-2 p-2 bg-background/50 rounded-lg"
-                                    >
-                                        <div className="flex items-center gap-2 min-w-0">
-                                            <div className="w-10 h-10 rounded overflow-hidden bg-secondary flex-shrink-0">
-                                                {item.reference_image_url ? (
-                                                    <img src={item.reference_image_url} alt={item.subject} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-sm">👕</div>
-                                                )}
-                                            </div>
-                                            <p className="text-sm truncate">{item.subject}</p>
-                                        </div>
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => handleSelectAsVariant(item)}
-                                            className="flex-shrink-0"
-                                        >
-                                            <GitBranch className="w-3 h-3 mr-1" />
-                                            Add as Variant
-                                        </Button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
                     </div>
 
                     <div className="space-y-2">
@@ -360,6 +325,43 @@ export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }:
                         />
                         <p className="text-xs text-muted-foreground">Press Enter after each year</p>
                     </div>
+
+                    {/* Match Suggestions (at bottom of Core Info) */}
+                    {matchedItems.length > 0 && !variantMode && (
+                        <div className="mt-4 p-3 bg-secondary/30 rounded-lg border border-border/50 space-y-2">
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                                <Search className="w-3 h-3" />
+                                Similar items in vault
+                            </p>
+                            {matchedItems.map((item) => (
+                                <div
+                                    key={item.id}
+                                    className="flex items-center justify-between gap-2 p-2 bg-background/50 rounded-lg"
+                                >
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <div className="w-10 h-10 rounded overflow-hidden bg-secondary flex-shrink-0">
+                                            {item.reference_image_url ? (
+                                                <img src={item.reference_image_url} alt={item.subject} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-sm">👕</div>
+                                            )}
+                                        </div>
+                                        <p className="text-sm truncate">{item.subject}</p>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleSelectAsVariant(item)}
+                                        className="flex-shrink-0"
+                                    >
+                                        <GitBranch className="w-3 h-3 mr-1" />
+                                        Add as Variant
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* Main Image */}
