@@ -59,7 +59,7 @@ export default function ReviewPage() {
                 .from("edit_proposals")
                 .select(`
             id, vault_item_id, field_name, old_value, new_value, status, upvotes, downvotes, created_at, user_id,
-            user:profiles(display_name, karma_score),
+            user:profiles!user_id(display_name, karma_score),
             vault_item:the_vault(subject)
           `)
                 .eq("status", filter)
