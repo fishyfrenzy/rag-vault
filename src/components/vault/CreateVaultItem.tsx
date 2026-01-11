@@ -102,10 +102,11 @@ export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }:
             }
 
             setIsSearching(true);
+            // Search by subject (brand + title combined) for more flexible matching
             const { data } = await supabase
                 .from("the_vault")
                 .select("id, brand, title, subject, reference_image_url")
-                .ilike("brand", `%${searchTerm}%`)
+                .ilike("subject", `%${searchTerm}%`)
                 .limit(5);
 
             setMatchedItems((data as MatchedItem[]) || []);
