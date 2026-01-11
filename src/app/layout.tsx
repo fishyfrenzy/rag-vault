@@ -5,6 +5,7 @@ import { BottomNav } from "@/components/layout/BottomNav";
 
 import { Navbar } from "@/components/layout/Navbar";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -50,8 +51,10 @@ export default function RootLayout({
           <Navbar />
           {children}
           <BottomNav />
+          <FeedbackButton />
         </AuthProvider>
       </body>
     </html>
   );
 }
+

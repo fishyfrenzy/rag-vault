@@ -39,18 +39,10 @@ export function Navbar() {
         <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-md px-6 py-4 border-b border-border/40">
             <div className="flex items-center justify-between">
                 {/* Logo */}
-                <div className="flex flex-col items-start flex-shrink-0">
-                    <div className="relative w-32 h-10">
-                        <Link href="/">
-                            <img src="/logo-main.png" alt="Ragvault" className="object-contain w-full h-full object-left invert" />
-                        </Link>
-                    </div>
-                    <a
-                        href="mailto:feedback@ragvault.io?subject=RagVault Feedback"
-                        className="text-[10px] text-muted-foreground hover:text-primary transition-colors -mt-1"
-                    >
-                        Send Feedback
-                    </a>
+                <div className="relative w-32 h-10 flex-shrink-0">
+                    <Link href="/">
+                        <img src="/logo-main.png" alt="Ragvault" className="object-contain w-full h-full object-left invert" />
+                    </Link>
                 </div>
 
                 {/* Mobile: Centered Activity Ticker */}
