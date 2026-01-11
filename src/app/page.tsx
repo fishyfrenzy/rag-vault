@@ -103,7 +103,7 @@ export default async function Home() {
         {/* Fresh Grid - Real Data */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
           {freshItems?.map((item: any) => (
-            <Link key={item.id} href={`/vault/${item.id}`}>
+            <Link key={item.id} href={`/vault/${item.slug || item.id}`}>
               <div className="space-y-2 group cursor-pointer">
                 <div className="aspect-square bg-secondary rounded-xl overflow-hidden border border-border/50 relative">
                   {item.reference_image_url ? (

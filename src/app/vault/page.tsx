@@ -13,6 +13,9 @@ import { SkeletonCardGrid } from "@/components/ui/skeleton";
 interface VaultItem {
     id: string;
     subject: string;
+    brand: string | null;
+    title: string | null;
+    slug: string | null;
     category: string;
     year: number | null;
     tag_brand: string | null;
@@ -105,7 +108,7 @@ export default function VaultPage() {
             {/* Grid */}
             <div className="px-6 py-4 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {items.map((item) => (
-                    <Link href={`/vault/${item.id}`} key={item.id}>
+                    <Link href={`/vault/${item.slug || item.id}`} key={item.id}>
                         <div className="relative">
                             <VaultItemCard
                                 subject={item.subject}
