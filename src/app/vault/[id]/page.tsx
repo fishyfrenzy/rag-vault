@@ -30,16 +30,22 @@ interface VaultItem {
     slug: string | null;
 }
 
+// Helper to check if string is a valid UUID
+const isUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
 // Generate dynamic metadata for SEO
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
     const { id } = await params;
     const supabase = await createClient();
 
-    const { data: item } = await supabase
-        .from("the_vault")
-        .select("subject, category, year, tag_brand, description, reference_image_url, verification_count")
-        .or(`id.eq.${id},slug.eq.${id}`)
-        .single();
+    // Query by id if UUID, otherwise by slug
+    let query = supabase.from("the_vault").select("subject, category, year, tag_brand, description, reference_image_url, verification_count");
+    if (isUUID(id)) {
+        query = query.eq("id", id);
+    } else {
+        query = query.eq("slug", id);
+    }
+    const { data: item } = await query.single();
 
     if (!item) {
         return {
@@ -95,12 +101,14 @@ export default async function VaultItemPage({ params }: { params: Promise<{ id: 
     const { id } = await params;
     const supabase = await createClient();
 
-    // Fetch item by ID or slug
-    const { data: item } = await supabase
-        .from("the_vault")
-        .select("*")
-        .or(`id.eq.${id},slug.eq.${id}`)
-        .single();
+    // Fetch item by ID if UUID, otherwise by slug
+    let query = supabase.from("the_vault").select("*");
+    if (isUUID(id)) {
+        query = query.eq("id", id);
+    } else {
+        query = query.eq("slug", id);
+    }
+    const { data: item } = await query.single();
 
     if (!item) {
         notFound();
