@@ -1,3 +1,6 @@
+-- Drop old function first (required to change return type)
+DROP FUNCTION IF EXISTS get_related_shirts(UUID);
+
 -- Update get_related_shirts to include slug
 CREATE OR REPLACE FUNCTION get_related_shirts(p_vault_item_id UUID)
 RETURNS TABLE (

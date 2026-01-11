@@ -426,10 +426,13 @@ export default function VaultItemClient({ initialItem }: VaultItemClientProps) {
                         vaultItemId={item.id}
                         userId={user.id}
                         currentValues={{
+                            brand: item.brand,
+                            title: item.title,
                             subject: item.subject,
                             category: item.category,
                             year: item.year,
                             tag_brand: item.tag_brand,
+                            description: item.description,
                             reference_image_url: item.reference_image_url,
                         }}
                         onClose={() => setShowEditModal(false)}

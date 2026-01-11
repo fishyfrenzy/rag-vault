@@ -11,10 +11,13 @@ interface EditProposalModalProps {
     vaultItemId: string;
     userId: string;
     currentValues: {
+        brand: string | null;
+        title: string | null;
         subject: string;
         category: string;
         year: string | number | null;
         tag_brand: string | null;
+        description: string | null;
         reference_image_url?: string | null;
     };
     onClose: () => void;
@@ -22,10 +25,12 @@ interface EditProposalModalProps {
 }
 
 const EDITABLE_FIELDS = [
-    { key: "subject", label: "Subject / Band Name", type: "text" },
+    { key: "brand", label: "Brand / Artist", type: "text", placeholder: "e.g. Nirvana, Harley-Davidson" },
+    { key: "title", label: "Title", type: "text", placeholder: "e.g. Heart Shaped Box, In Utero Tour" },
     { key: "category", label: "Category", type: "select", options: ["Music", "Motorcycle", "Movie", "Art", "Sport", "Advertising", "Other"] },
     { key: "year", label: "Year (or Range)", type: "text", placeholder: "e.g. 1988 or 1988-1991" },
     { key: "tag_brand", label: "Tag Brand", type: "text" },
+    { key: "description", label: "Description", type: "textarea", placeholder: "Detailed description of the shirt..." },
     { key: "reference_image_url", label: "Main Image", type: "image" },
 ];
 
@@ -171,6 +176,14 @@ export function EditProposalModal({
                                             </Button>
                                         )}
                                     </div>
+                                ) : selectedFieldInfo?.type === "textarea" ? (
+                                    <textarea
+                                        value={newValue}
+                                        onChange={(e) => setNewValue(e.target.value)}
+                                        placeholder={selectedFieldInfo?.placeholder || `Enter new ${selectedFieldInfo?.label.toLowerCase()}`}
+                                        className="flex min-h-[120px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm resize-none"
+                                        rows={4}
+                                    />
                                 ) : (
                                     <Input
                                         type={selectedFieldInfo?.type === "number" ? "number" : "text"}
