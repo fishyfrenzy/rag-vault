@@ -74,6 +74,7 @@ interface VaultItem {
 
 interface VariantItem {
     id: string;
+    slug: string | null;
     subject: string;
     variant_type: string | null;
     reference_image_url: string | null;
@@ -81,6 +82,7 @@ interface VariantItem {
 
 interface ParentShirt {
     id: string;
+    slug: string | null;
     subject: string;
     reference_image_url: string | null;
 }
@@ -136,7 +138,7 @@ export default function VaultItemClient({ initialItem }: VaultItemClientProps) {
         const fetchVariants = async () => {
             const { data } = await supabase
                 .from("the_vault")
-                .select("id, subject, variant_type, reference_image_url")
+                .select("id, slug, subject, variant_type, reference_image_url")
                 .eq("parent_id", item.id)
                 .limit(10);
             setVariants((data as VariantItem[]) || []);
@@ -149,7 +151,7 @@ export default function VaultItemClient({ initialItem }: VaultItemClientProps) {
         if (item.parent_id) {
             supabase
                 .from("the_vault")
-                .select("id, subject, reference_image_url")
+                .select("id, slug, subject, reference_image_url")
                 .eq("id", item.parent_id)
                 .single()
                 .then(({ data }) => {

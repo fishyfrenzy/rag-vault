@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 
 interface VariantCardProps {
     id: string;
+    slug?: string | null;
     subject: string;
     variantType: string | null;
     imageUrl: string | null;
@@ -21,10 +22,10 @@ const VARIANT_LABELS: Record<string, string> = {
     reprint: "Reprint",
 };
 
-export function VariantCard({ id, subject, variantType, imageUrl, className }: VariantCardProps) {
+export function VariantCard({ id, slug, subject, variantType, imageUrl, className }: VariantCardProps) {
     return (
         <Link
-            href={`/vault/${id}`}
+            href={`/vault/${slug || id}`}
             className={cn(
                 "group flex gap-3 p-2 rounded-lg border border-border/50 bg-card/50 hover:border-primary/50 transition-colors",
                 className
@@ -63,12 +64,14 @@ export function VariantCard({ id, subject, variantType, imageUrl, className }: V
 interface VariantsSectionProps {
     variants: Array<{
         id: string;
+        slug?: string | null;
         subject: string;
         variant_type: string | null;
         reference_image_url: string | null;
     }>;
     parentShirt?: {
         id: string;
+        slug?: string | null;
         subject: string;
         reference_image_url: string | null;
     } | null;
@@ -88,6 +91,7 @@ export function VariantsSection({ variants, parentShirt }: VariantsSectionProps)
                     </p>
                     <VariantCard
                         id={parentShirt.id}
+                        slug={parentShirt.slug}
                         subject={parentShirt.subject}
                         variantType={null}
                         imageUrl={parentShirt.reference_image_url}
@@ -105,6 +109,7 @@ export function VariantsSection({ variants, parentShirt }: VariantsSectionProps)
                             <VariantCard
                                 key={variant.id}
                                 id={variant.id}
+                                slug={variant.slug}
                                 subject={variant.subject}
                                 variantType={variant.variant_type}
                                 imageUrl={variant.reference_image_url}

@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 interface RelatedShirt {
     id: string;
     related_shirt_id: string;
+    slug: string | null;
     subject: string;
     category: string;
     reference_image_url: string | null;
@@ -75,7 +76,7 @@ export function RelatedShirts({ vaultItemId, onSuggestClick }: RelatedShirtsProp
                     {related.map((item) => (
                         <div key={item.id} className="space-y-2">
                             <Link
-                                href={`/vault/${item.related_shirt_id}`}
+                                href={`/vault/${item.slug || item.related_shirt_id}`}
                                 className="block aspect-square rounded-lg overflow-hidden bg-secondary group"
                             >
                                 {item.reference_image_url ? (
