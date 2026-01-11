@@ -28,6 +28,7 @@ import { IsoButton } from "@/components/profile/IsoList";
 import { ItemHistory } from "@/components/vault/ItemHistory";
 import { VariantsSection } from "@/components/vault/VariantCard";
 import { RelatedShirts } from "@/components/vault/RelatedShirts";
+import { AddVariantModal } from "@/components/vault/AddVariantModal";
 import { SuggestRelatedModal } from "@/components/vault/SuggestRelatedModal";
 
 const getFlagEmoji = (countryName: string) => {
@@ -111,6 +112,7 @@ export default function VaultItemClient({ initialItem }: VaultItemClientProps) {
     const [variants, setVariants] = useState<VariantItem[]>([]);
     const [parentShirt, setParentShirt] = useState<ParentShirt | null>(null);
     const [showHistory, setShowHistory] = useState(false);
+    const [showVariantModal, setShowVariantModal] = useState(false);
 
     useEffect(() => {
         const fetchContributions = async () => {
@@ -276,6 +278,20 @@ export default function VaultItemClient({ initialItem }: VaultItemClientProps) {
                                 <Button disabled className="flex-1 bg-green-500/20 text-green-500">
                                     <CheckCircle className="w-4 h-4 mr-2" />
                                     Verified
+                                </Button>
+                            )}
+                        </div>
+
+                        {/* Secondary Actions */}
+                        <div className="flex gap-2">
+                            {user && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setShowVariantModal(true)}
+                                >
+                                    <GitBranch className="w-4 h-4 mr-2" />
+                                    Add Variant
                                 </Button>
                             )}
                         </div>
@@ -448,6 +464,26 @@ export default function VaultItemClient({ initialItem }: VaultItemClientProps) {
                         vaultItemSubject={item.subject}
                         onClose={() => setShowRelatedModal(false)}
                         onSuccess={() => setShowRelatedModal(false)}
+                    />
+                )
+            }
+
+            {
+                showVariantModal && user && (
+                    <AddVariantModal
+                        parentItem={{
+                            id: item.id,
+                            brand: item.brand,
+                            title: item.title,
+                            subject: item.subject,
+                            reference_image_url: item.reference_image_url,
+                        }}
+                        userId={user.id}
+                        onClose={() => setShowVariantModal(false)}
+                        onSuccess={(variantId) => {
+                            setShowVariantModal(false);
+                            router.push(`/vault/${variantId}`);
+                        }}
                     />
                 )
             }
