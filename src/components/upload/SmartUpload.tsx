@@ -43,11 +43,13 @@ interface SmartUploadProps {
     onComplete: (vaultItemId: string, imageUrls: string[]) => void;
     onCancel: () => void;
     embedded?: boolean;
+    minImages?: number;
+    maxImages?: number;
 }
 
 type Step = "upload" | "analyzing" | "matches" | "confirm" | "saving" | "error";
 
-export function SmartUpload({ userId, onComplete, onCancel, embedded = false }: SmartUploadProps) {
+export function SmartUpload({ userId, onComplete, onCancel, embedded = false, minImages = 2, maxImages = 8 }: SmartUploadProps) {
     const [step, setStep] = useState<Step>("upload");
     const [images, setImages] = useState<File[]>([]);
     const [imageUrls, setImageUrls] = useState<string[]>([]);
@@ -235,8 +237,8 @@ export function SmartUpload({ userId, onComplete, onCancel, embedded = false }: 
 
                     <ImageUploader
                         onImagesReady={handleImagesReady}
-                        minImages={2}
-                        maxImages={8}
+                        minImages={minImages}
+                        maxImages={maxImages}
                     />
 
                     <div className="flex gap-4">
@@ -246,7 +248,7 @@ export function SmartUpload({ userId, onComplete, onCancel, embedded = false }: 
                         <Button
                             className="flex-1"
                             onClick={analyzeImages}
-                            disabled={images.length < (embedded ? 1 : 2)}
+                            disabled={images.length < minImages}
                         >
                             {embedded ? (
                                 <>

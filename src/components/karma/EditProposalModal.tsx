@@ -235,7 +235,9 @@ export function EditProposalModal({
                             userId={userId}
                             onComplete={handleImageUploadComplete}
                             onCancel={() => setShowImageUpload(false)}
-                            embedded={true} // Add this prop to SmartUpload if it doesn't exist, or wrapper might be needed
+                            embedded={true}
+                            minImages={1}
+                            maxImages={1}
                         />
                     </div>
                 )}
