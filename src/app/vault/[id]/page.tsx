@@ -62,6 +62,7 @@ interface VaultItem {
     created_at: string;
     created_by: string | null;
     description: string | null;
+    tags: string[] | null;
 }
 
 interface Contribution {
@@ -346,6 +347,25 @@ export default function VaultItemPage() {
                                 <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
                                     {item.description}
                                 </p>
+                            </div>
+                        )}
+
+                        {/* Tags */}
+                        {item.tags && item.tags.length > 0 && (
+                            <div className="space-y-2 pt-2">
+                                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                                    Tags
+                                </h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {item.tags.map((tag) => (
+                                        <span
+                                            key={tag}
+                                            className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium border border-primary/20"
+                                        >
+                                            {tag}
+                                        </span>
+                                    ))}
+                                </div>
                             </div>
                         )}
 

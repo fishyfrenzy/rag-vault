@@ -4,7 +4,8 @@ import React, { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ChevronDown, ChevronUp, Image as ImageIcon } from "lucide-react";
+import { TagInput } from "@/components/ui/TagInput";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { ImageUploader } from "@/components/upload/ImageUploader";
 
 function FormLabel({ children, required }: { children: React.ReactNode, required?: boolean }) {
@@ -49,14 +50,17 @@ export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }:
     // Core Information (Required)
     const [subject, setSubject] = useState(initialSubject);
     const [category, setCategory] = useState("Music");
-    const [year, setYear] = useState("");
+    const [years, setYears] = useState<string[]>([]);
     const [imageFile, setImageFile] = useState<File | null>(null);
 
     // Garment Details (Optional)
     const [garmentType, setGarmentType] = useState("t-shirt");
     const [stitchType, setStitchType] = useState("Single");
     const [origin, setOrigin] = useState("");
-    const [tagBrand, setTagBrand] = useState("");
+    const [tagBrands, setTagBrands] = useState<string[]>([]);
+
+    // Tags
+    const [tags, setTags] = useState<string[]>([]);
 
     // Description (Wiki content)
     const [description, setDescription] = useState("");
@@ -66,7 +70,7 @@ export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }:
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!subject.trim() || !category || !year) {
+        if (!subject.trim() || !category) {
             alert("Please fill all required fields.");
             return;
         }
@@ -99,8 +103,9 @@ export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }:
                 .insert({
                     subject,
                     category,
-                    year: year || null,
-                    tag_brand: tagBrand ? tagBrand.split(',').map(t => t.trim()) : null,
+                    year: years.length > 0 ? years.join(', ') : null,
+                    tag_brand: tagBrands.length > 0 ? tagBrands : null,
+                    tags: tags.length > 0 ? tags : null,
                     stitch_type: stitchType || null,
                     origin: origin || null,
                     body_type: garmentType || null,
@@ -165,29 +170,29 @@ export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }:
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <FormLabel required>Category</FormLabel>
-                            <select
-                                className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                value={category}
-                                onChange={(e) => setCategory(e.target.value)}
-                                required
-                            >
-                                {['Music', 'Motorcycle', 'Movie', 'Art', 'Sport', 'Advertising', 'Other'].map(c => (
-                                    <option key={c} value={c} className="bg-background">{c}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="space-y-2">
-                            <FormLabel>Year(s)</FormLabel>
-                            <Input
-                                value={year}
-                                onChange={(e) => setYear(e.target.value)}
-                                placeholder="e.g. 1988, 1991 or 1988-1991"
-                                className="bg-background/50"
-                            />
-                        </div>
+                    <div className="space-y-2">
+                        <FormLabel required>Category</FormLabel>
+                        <select
+                            className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            value={category}
+                            onChange={(e) => setCategory(e.target.value)}
+                            required
+                        >
+                            {['Music', 'Motorcycle', 'Movie', 'Art', 'Sport', 'Advertising', 'Other'].map(c => (
+                                <option key={c} value={c} className="bg-background">{c}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="space-y-2">
+                        <FormLabel>Year(s)</FormLabel>
+                        <TagInput
+                            value={years}
+                            onChange={setYears}
+                            placeholder="Type a year and press Enter (e.g. 1988)"
+                            maxItems={20}
+                        />
+                        <p className="text-xs text-muted-foreground">Press Enter after each year</p>
                     </div>
                 </div>
 
@@ -202,6 +207,20 @@ export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }:
                             minImages={1}
                             maxImages={1}
                         />
+                    </div>
+                </CollapsibleSection>
+
+                {/* Tags */}
+                <CollapsibleSection title="Tags" defaultOpen>
+                    <div className="space-y-2">
+                        <FormLabel>Tags (up to 10)</FormLabel>
+                        <TagInput
+                            value={tags}
+                            onChange={setTags}
+                            placeholder="Type a tag and press Enter"
+                            maxItems={10}
+                        />
+                        <p className="text-xs text-muted-foreground">Add keywords like "bootleg", "tour", "pushead", "all-over-print"</p>
                     </div>
                 </CollapsibleSection>
 
@@ -246,13 +265,13 @@ export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }:
 
                     <div className="space-y-2">
                         <FormLabel>Tag Brand(s)</FormLabel>
-                        <Input
-                            value={tagBrand}
-                            onChange={(e) => setTagBrand(e.target.value)}
-                            placeholder="e.g. Giant, Hanes (comma-separated for multiple)"
-                            className="bg-background/50"
+                        <TagInput
+                            value={tagBrands}
+                            onChange={setTagBrands}
+                            placeholder="Type a brand and press Enter (e.g. Giant)"
+                            maxItems={5}
                         />
-                        <p className="text-xs text-muted-foreground">Separate multiple tags with commas</p>
+                        <p className="text-xs text-muted-foreground">Press Enter after each brand</p>
                     </div>
                 </CollapsibleSection>
 
@@ -284,3 +303,4 @@ export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }:
         </div>
     );
 }
+
