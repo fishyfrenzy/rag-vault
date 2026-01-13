@@ -35,8 +35,47 @@ interface TagGuideEntry {
 
 export async function POST(request: Request) {
     try {
+        // Authentication check - require logged in user
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json(
+                { error: "Authentication required" },
+                { status: 401 }
+            );
+        }
+
+        // Rate limiting - max 10 requests per hour per user
+        const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
+        const windowStart = new Date(Math.floor(Date.now() / 3600000) * 3600000).toISOString();
+
+        const { count } = await supabase
+            .from('rate_limits')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+            .eq('action', 'analyze_shirt')
+            .gte('window_start', oneHourAgo);
+
+        if (count && count >= 10) {
+            return NextResponse.json(
+                { error: "Rate limit exceeded. Maximum 10 analyses per hour." },
+                { status: 429 }
+            );
+        }
+
+        // Record this request for rate limiting
+        await supabase.from('rate_limits').upsert({
+            user_id: user.id,
+            action: 'analyze_shirt',
+            window_start: windowStart,
+            count: (count || 0) + 1
+        }, {
+            onConflict: 'user_id,action,window_start'
+        });
+
         const { imageUrls } = await request.json();
-        console.log("Received imageUrls:", imageUrls?.length);
+        console.log("Received imageUrls:", imageUrls?.length, "from user:", user.id);
 
         if (!imageUrls || imageUrls.length < 2) {
             return NextResponse.json(
@@ -54,8 +93,6 @@ export async function POST(request: Request) {
         }
 
         // Fetch existing vault items and tag guide for context
-        const supabase = await createClient();
-
         const [vaultResult, tagGuideResult] = await Promise.all([
             supabase
                 .from("the_vault")
