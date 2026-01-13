@@ -43,6 +43,7 @@ export function ArticleEditor({ article, blocks: initialBlocks }: ArticleEditorP
     const [subtitle, setSubtitle] = useState(article?.subtitle || "");
     const [excerpt, setExcerpt] = useState(article?.excerpt || "");
     const [heroImage, setHeroImage] = useState(article?.hero_image_url || "");
+    const [heroPosition, setHeroPosition] = useState(article?.hero_position || { x: 50, y: 50 });
     const [articleType, setArticleType] = useState<ArticleType>(article?.article_type || "find_of_the_week");
 
     // Content blocks
@@ -358,20 +359,58 @@ export function ArticleEditor({ article, blocks: initialBlocks }: ArticleEditorP
                 {/* Hero Image */}
                 <div className="mb-8">
                     {heroImage ? (
-                        <div className="relative aspect-[21/9] rounded-2xl overflow-hidden group">
-                            <img
-                                src={heroImage}
-                                alt="Hero"
-                                className="w-full h-full object-cover"
-                            />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                <Button
-                                    variant="secondary"
-                                    onClick={() => setHeroImage("")}
-                                >
-                                    Remove Image
-                                </Button>
+                        <div className="space-y-3">
+                            {/* Image with position picker overlay */}
+                            <div
+                                className="relative aspect-[21/9] rounded-2xl overflow-hidden group cursor-crosshair"
+                                onClick={(e) => {
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    const x = Math.round(((e.clientX - rect.left) / rect.width) * 100);
+                                    const y = Math.round(((e.clientY - rect.top) / rect.height) * 100);
+                                    setHeroPosition({ x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) });
+                                }}
+                            >
+                                <img
+                                    src={heroImage}
+                                    alt="Hero"
+                                    className="w-full h-full object-cover"
+                                    style={{ objectPosition: `${heroPosition.x}% ${heroPosition.y}%` }}
+                                />
+                                {/* Focal point indicator */}
+                                <div
+                                    className="absolute w-6 h-6 border-2 border-white rounded-full shadow-lg pointer-events-none transform -translate-x-1/2 -translate-y-1/2 bg-primary/50"
+                                    style={{ left: `${heroPosition.x}%`, top: `${heroPosition.y}%` }}
+                                />
+                                {/* Overlay with controls */}
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors">
+                                    <div className="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setHeroPosition({ x: 50, y: 50 });
+                                            }}
+                                        >
+                                            Center
+                                        </Button>
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setHeroImage("");
+                                            }}
+                                        >
+                                            Remove
+                                        </Button>
+                                    </div>
+                                </div>
                             </div>
+                            {/* Position info */}
+                            <p className="text-xs text-muted-foreground text-center">
+                                Click on the image to set focal point • Current: {heroPosition.x}%, {heroPosition.y}%
+                            </p>
                         </div>
                     ) : (
                         <label className="flex flex-col items-center justify-center aspect-[21/9] border-2 border-dashed rounded-2xl cursor-pointer hover:border-primary/50 transition-colors bg-secondary/20">
@@ -382,7 +421,7 @@ export function ArticleEditor({ article, blocks: initialBlocks }: ArticleEditorP
                                 type="file"
                                 accept="image/*"
                                 className="hidden"
-                                onChange={async (e) => {
+                                onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
                                     const file = e.target.files?.[0];
                                     if (file) {
                                         try {

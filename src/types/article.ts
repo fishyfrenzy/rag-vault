@@ -82,6 +82,7 @@ export interface Article {
     subtitle: string | null;
     excerpt: string | null;
     hero_image_url: string | null;
+    hero_position?: { x: number; y: number }; // Focal point (0-100 for each axis)
     article_type: ArticleType;
     status: ArticleStatus;
     featured_vault_id: string | null;
