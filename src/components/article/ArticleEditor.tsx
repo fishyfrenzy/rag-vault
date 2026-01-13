@@ -385,8 +385,13 @@ export function ArticleEditor({ article, blocks: initialBlocks }: ArticleEditorP
                                 onChange={async (e) => {
                                     const file = e.target.files?.[0];
                                     if (file) {
-                                        const url = await uploadHeroImage(file);
-                                        setHeroImage(url);
+                                        try {
+                                            const url = await uploadHeroImage(file);
+                                            setHeroImage(url);
+                                        } catch (error) {
+                                            console.error('Hero image upload failed:', error);
+                                            alert('Failed to upload image. Make sure the "article-images" storage bucket exists in Supabase.');
+                                        }
                                     }
                                 }}
                             />
