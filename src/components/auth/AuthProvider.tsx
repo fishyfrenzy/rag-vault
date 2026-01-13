@@ -12,6 +12,7 @@ interface UserProfile {
     avatar_url: string | null;
     karma_score: number | null;
     updated_at: string | null;
+    is_admin?: boolean;
 }
 
 interface AuthContextType {

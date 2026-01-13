@@ -30,6 +30,7 @@ import { VariantsSection } from "@/components/vault/VariantCard";
 import { RelatedShirts } from "@/components/vault/RelatedShirts";
 import { AddVariantModal } from "@/components/vault/AddVariantModal";
 import { SuggestRelatedModal } from "@/components/vault/SuggestRelatedModal";
+import type { VaultItem } from "@/types/vault";
 
 const getFlagEmoji = (countryName: string) => {
     if (!countryName) return "🌍";
@@ -46,32 +47,6 @@ const getFlagEmoji = (countryName: string) => {
     if (code === "haiti") return "🇭🇹";
     return "🌍";
 };
-
-interface VaultItem {
-    id: string;
-    subject: string;
-    brand: string | null;
-    title: string | null;
-    category: string;
-    year: string | null;
-    tag_brand: string | null;
-    stitch_type: string | null;
-    material: string | null;
-    origin: string | null;
-    body_type: string | null;
-    reference_image_url: string | null;
-    verification_count: number;
-    upvotes: number;
-    downvotes: number;
-    score: number;
-    created_at: string;
-    created_by: string | null;
-    description: string | null;
-    tags: string[] | null;
-    parent_id: string | null;
-    variant_type: string | null;
-    slug: string | null;
-}
 
 interface VariantItem {
     id: string;

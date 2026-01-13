@@ -30,9 +30,20 @@ export default async function Home() {
   // Fetch fresh items
   const { data: freshItems } = await supabase
     .from('the_vault')
-    .select('id, subject, category, reference_image_url, year')
+    .select('id, subject, slug, category, reference_image_url, year')
     .order('created_at', { ascending: false })
     .limit(8);
+
+  // Fetch featured article (Find of the Week)
+  const { data: featuredArticle } = await supabase
+    .from('articles')
+    .select('id, slug, title, subtitle, hero_image_url')
+    .eq('status', 'published')
+    .eq('article_type', 'find_of_the_week')
+    .order('published_at', { ascending: false })
+    .limit(1)
+    .single();
+
 
   return (
     <MobileContainer className="pb-20">
@@ -82,19 +93,35 @@ export default async function Home() {
       <section className="mt-8 space-y-6 max-w-7xl mx-auto px-4 md:px-6">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-lg md:text-2xl">Find of the Week</h3>
-          <span className="text-xs text-muted-foreground md:text-sm">View all</span>
+          <a href="/articles" className="text-xs text-muted-foreground md:text-sm hover:text-foreground transition-colors">View all</a>
         </div>
 
-        {/* Mock Carousel Item - Responsive Width */}
-        <div className="md:grid md:grid-cols-2 md:gap-8">
-          <div className="mx-0 aspect-[4/5] bg-secondary rounded-2xl relative overflow-hidden group md:aspect-video">
-            <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors" />
-            <div className="absolute bottom-4 left-4 text-white z-10">
-              <p className="font-bold text-lg md:text-3xl">Metallica</p>
-              <p className="text-sm opacity-90 md:text-lg">1991 · Pushead · Giant</p>
+        {/* Featured Article */}
+        {featuredArticle ? (
+          <a href={`/articles/${featuredArticle.slug}`} className="block group">
+            <div className="relative aspect-[4/5] md:aspect-[21/9] rounded-2xl overflow-hidden bg-secondary">
+              {featuredArticle.hero_image_url && (
+                <img
+                  src={featuredArticle.hero_image_url}
+                  alt={featuredArticle.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+              <div className="absolute bottom-4 left-4 right-4 text-white z-10">
+                <span className="text-xs md:text-sm font-medium opacity-90 mb-1 block">🔥 Find of the Week</span>
+                <p className="font-bold text-xl md:text-3xl leading-tight">{featuredArticle.title}</p>
+                {featuredArticle.subtitle && (
+                  <p className="text-sm md:text-lg opacity-90 mt-1">{featuredArticle.subtitle}</p>
+                )}
+              </div>
             </div>
+          </a>
+        ) : (
+          <div className="aspect-[4/5] md:aspect-[21/9] bg-secondary rounded-2xl flex items-center justify-center">
+            <p className="text-muted-foreground">No featured article yet</p>
           </div>
-        </div>
+        )}
 
         <div className="flex items-center justify-between pt-8">
           <h3 className="font-semibold text-lg md:text-2xl">Fresh to the Vault</h3>

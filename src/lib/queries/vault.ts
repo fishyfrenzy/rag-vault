@@ -4,36 +4,11 @@
  */
 
 import { supabase } from "@/lib/supabase/client";
+import type { VaultItem, VaultSearchParams } from "@/types/vault";
 
-// Types
-export interface VaultItem {
-    id: string;
-    subject: string;
-    category: string;
-    year: string | null;
-    tag_brand: string[] | null;
-    stitch_type: string | null;
-    material: string | null;
-    origin: string | null;
-    body_type: string | null;
-    reference_image_url: string | null;
-    verification_count: number;
-    upvotes: number;
-    downvotes: number;
-    score: number;
-    created_at: string;
-    created_by: string | null;
-    description: string | null;
-    tags: string[] | null;
-    is_verified?: boolean;
-}
+// Re-export types for convenience
+export type { VaultItem, VaultSearchParams } from "@/types/vault";
 
-export interface VaultSearchParams {
-    query?: string;
-    category?: string;
-    limit?: number;
-    offset?: number;
-}
 
 // Queries
 export async function getVaultItem(id: string) {

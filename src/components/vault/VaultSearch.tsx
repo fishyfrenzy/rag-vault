@@ -6,15 +6,7 @@ import { supabase } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
-
-interface VaultItem {
-    id: string;
-    subject: string;
-    category: string;
-    year?: number;
-    tag_brand?: string;
-    reference_image_url?: string;
-}
+import type { VaultItem } from "@/types/vault";
 
 interface VaultSearchProps {
     onSelect: (item: VaultItem) => void;
