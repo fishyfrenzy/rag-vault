@@ -34,7 +34,8 @@ export interface ImageBlockContent {
     url: string;
     alt: string;
     caption?: string;
-    width?: 'full' | 'wide' | 'medium'; // full = edge-to-edge, wide = larger, medium = content width
+    width?: 'full' | 'wide' | 'medium' | 'custom'; // full = edge-to-edge, wide = larger, medium = content width, custom = percentage
+    customWidth?: number; // 10-100 percentage when width is 'custom'
 }
 
 export interface VaultEmbedBlockContent {

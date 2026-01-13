@@ -233,6 +233,21 @@ function ImageBlockEditor({
         }
     };
 
+    // Get the effective width style
+    const getWidthStyle = () => {
+        if (content.width === 'custom' && content.customWidth) {
+            return { width: `${content.customWidth}%` };
+        }
+        return {};
+    };
+
+    const getWidthClass = () => {
+        if (content.width === 'custom') return '';
+        if (content.width === 'full') return 'w-full';
+        if (content.width === 'wide') return 'w-full max-w-3xl';
+        return 'w-full max-w-xl'; // medium/default
+    };
+
     return (
         <div className="space-y-3">
             {content.url ? (
@@ -240,12 +255,8 @@ function ImageBlockEditor({
                     <img
                         src={content.url}
                         alt={content.alt}
-                        className={cn(
-                            "rounded-xl object-cover",
-                            content.width === 'full' && "w-full",
-                            content.width === 'wide' && "w-full max-w-3xl",
-                            content.width === 'medium' && "w-full max-w-xl"
-                        )}
+                        className={cn("rounded-xl object-cover", getWidthClass())}
+                        style={getWidthStyle()}
                     />
                 </div>
             ) : (
@@ -261,23 +272,52 @@ function ImageBlockEditor({
                 </label>
             )}
 
-            <div className="flex gap-2 items-center">
-                <Input
-                    value={content.caption || ''}
-                    onChange={(e) => onUpdate({ ...content, caption: e.target.value })}
-                    placeholder="Caption (optional)"
-                    className="text-sm"
-                />
-                <select
-                    value={content.width || 'wide'}
-                    onChange={(e) => onUpdate({ ...content, width: e.target.value as ImageBlockContent['width'] })}
-                    className="text-sm border rounded-md px-2 py-1.5 bg-background"
-                >
-                    <option value="medium">Medium</option>
-                    <option value="wide">Wide</option>
-                    <option value="full">Full Width</option>
-                </select>
+            {/* Caption */}
+            <Input
+                value={content.caption || ''}
+                onChange={(e) => onUpdate({ ...content, caption: e.target.value })}
+                placeholder="Caption (optional)"
+                className="text-sm"
+            />
+
+            {/* Width controls */}
+            <div className="flex flex-wrap gap-2 items-center">
+                <span className="text-xs text-muted-foreground">Width:</span>
+                {(['medium', 'wide', 'full', 'custom'] as const).map((w) => (
+                    <button
+                        key={w}
+                        onClick={() => onUpdate({
+                            ...content,
+                            width: w,
+                            customWidth: w === 'custom' ? (content.customWidth || 75) : content.customWidth
+                        })}
+                        className={cn(
+                            "px-2 py-1 text-xs rounded-md transition-colors capitalize",
+                            content.width === w
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-secondary hover:bg-secondary/80"
+                        )}
+                    >
+                        {w}
+                    </button>
+                ))}
             </div>
+
+            {/* Custom width slider */}
+            {content.width === 'custom' && (
+                <div className="flex items-center gap-3">
+                    <input
+                        type="range"
+                        min="20"
+                        max="100"
+                        step="5"
+                        value={content.customWidth || 75}
+                        onChange={(e) => onUpdate({ ...content, customWidth: parseInt(e.target.value) })}
+                        className="flex-1 h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
+                    />
+                    <span className="text-sm font-medium w-12 text-right">{content.customWidth || 75}%</span>
+                </div>
+            )}
         </div>
     );
 }

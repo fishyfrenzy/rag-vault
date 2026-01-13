@@ -78,13 +78,19 @@ function HeadingBlock({ content }: { content: HeadingBlockContent }) {
 function ImageBlock({ content }: { content: ImageBlockContent }) {
     if (!content.url) return null;
 
+    const getStyleAndClass = () => {
+        if (content.width === 'custom' && content.customWidth) {
+            return { style: { width: `${content.customWidth}%` }, className: "mx-auto" };
+        }
+        if (content.width === 'full') return { className: "-mx-4 md:-mx-8 lg:-mx-16" };
+        if (content.width === 'wide') return { className: "max-w-3xl mx-auto" };
+        return { className: "max-w-xl mx-auto" }; // medium/default
+    };
+
+    const { style, className } = getStyleAndClass();
+
     return (
-        <figure className={cn(
-            "my-8",
-            content.width === 'full' && "-mx-4 md:-mx-8 lg:-mx-16",
-            content.width === 'wide' && "max-w-3xl mx-auto",
-            content.width === 'medium' && "max-w-xl mx-auto"
-        )}>
+        <figure className={cn("my-8", className)} style={style}>
             <img
                 src={content.url}
                 alt={content.alt}
