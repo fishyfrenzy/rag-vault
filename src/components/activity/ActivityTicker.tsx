@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import {
     CheckCircle, ThumbsUp, ThumbsDown, Edit, PlusCircle,
-    Tag, Image
+    Tag, Image, MessageSquare
 } from "lucide-react";
 import Link from "next/link";
 
@@ -24,6 +24,8 @@ const ACTION_CONFIG: Record<string, { icon: React.ElementType; verb: string; col
     verify: { icon: CheckCircle, verb: "verified", color: "text-blue-500" },
     upvote: { icon: ThumbsUp, verb: "upvoted", color: "text-green-500" },
     downvote: { icon: ThumbsDown, verb: "downvoted", color: "text-red-500" },
+    thread_created: { icon: MessageSquare, verb: "started a discussion", color: "text-blue-400" },
+    post_created: { icon: MessageSquare, verb: "replied to", color: "text-purple-400" },
     edit_proposed: { icon: Edit, verb: "suggested edit on", color: "text-yellow-500" },
     list_for_sale: { icon: Tag, verb: "listed", color: "text-purple-500" },
     add_to_collection: { icon: PlusCircle, verb: "collected", color: "text-blue-500" },

@@ -2,16 +2,16 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Search, Store, FolderHeart, User } from 'lucide-react';
+import { Search, Store, FolderHeart, User, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function BottomNav() {
     const pathname = usePathname();
 
     const navItems = [
-        { label: 'Home', href: '/', icon: Home },
         { label: 'Vault', href: '/vault', icon: Search },
         { label: 'Market', href: '/marketplace', icon: Store },
+        { label: 'Forums', href: '/forums', icon: MessageSquare },
         { label: 'Collection', href: '/my-collection', icon: FolderHeart },
         { label: 'Profile', href: '/profile', icon: User },
     ];

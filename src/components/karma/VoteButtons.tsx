@@ -7,7 +7,7 @@ import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface VoteButtonsProps {
-    targetType: "vault_item" | "edit_proposal";
+    targetType: "vault_item" | "edit_proposal" | "forum_post";
     targetId: string;
     initialUpvotes?: number;
     initialDownvotes?: number;

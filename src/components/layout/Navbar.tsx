@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Search, PlusCircle, User, Store, FolderHeart } from 'lucide-react';
+import { Home, Search, PlusCircle, User, Store, FolderHeart, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from "@/components/auth/AuthProvider";
 import { ActivityTicker } from "@/components/activity/ActivityTicker";
@@ -27,6 +27,7 @@ export function Navbar() {
     const navItems = [
         { label: 'Home', href: '/', icon: Home },
         { label: 'Vault', href: '/vault', icon: Search },
+        { label: 'Forums', href: '/forums', icon: MessageSquare },
         { label: 'Marketplace', href: '/marketplace', icon: Store },
         { label: 'My Collection', href: '/my-collection', icon: FolderHeart },
         { label: 'Profile', href: '/profile', icon: User },
