@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import { useDebounce } from "use-debounce";
 import { useSearchParams } from "next/navigation";
 import { MobileContainer } from "@/components/layout/MobileContainer";
@@ -38,7 +38,23 @@ interface QuickFilters {
     newThisWeek: boolean;
 }
 
+// Wrapper component with Suspense boundary
 export default function VaultPage() {
+    return (
+        <Suspense fallback={
+            <MobileContainer className="pb-24">
+                <div className="px-6 py-4">
+                    <SkeletonCardGrid count={8} />
+                </div>
+            </MobileContainer>
+        }>
+            <VaultPageContent />
+        </Suspense>
+    );
+}
+
+function VaultPageContent() {
+
     // Read URL params for initial filter values
     const searchParams = useSearchParams();
     const initialSearch = searchParams.get("search") || "";
