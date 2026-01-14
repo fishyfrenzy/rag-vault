@@ -32,6 +32,7 @@ import { AddVariantModal } from "@/components/vault/AddVariantModal";
 import { SuggestRelatedModal } from "@/components/vault/SuggestRelatedModal";
 import { ImageLightbox } from "@/components/ui/ImageLightbox";
 import { VaultTags } from "@/components/vault/VaultTags";
+import { VaultImageGallery } from "@/components/vault/VaultImageGallery";
 import type { VaultItem } from "@/types/vault";
 
 const getFlagEmoji = (countryName: string) => {
@@ -197,22 +198,11 @@ export default function VaultItemClient({ initialItem }: VaultItemClientProps) {
 
                 {/* Main Content */}
                 <div className="grid gap-6 lg:grid-cols-2">
-                    {/* Image */}
-                    <div className="aspect-[4/5] rounded-2xl overflow-hidden bg-secondary">
-                        {item.reference_image_url ? (
-                            <ImageLightbox src={item.reference_image_url} alt={item.subject} className="w-full h-full">
-                                <img
-                                    src={item.reference_image_url}
-                                    alt={item.subject}
-                                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                                />
-                            </ImageLightbox>
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                                No Reference Image
-                            </div>
-                        )}
-                    </div>
+                    {/* Multi-Image Gallery - Front/Back/Tag Views */}
+                    <VaultImageGallery
+                        vaultItemId={item.id}
+                        fallbackImageUrl={item.reference_image_url}
+                    />
 
                     {/* Details */}
                     <div className="space-y-6">
