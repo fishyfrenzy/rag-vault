@@ -112,23 +112,18 @@ export default function VaultPage() {
                 .from("the_vault")
                 .select("id, subject, brand, title, slug, category, year, tag_brand, stitch_type, origin, reference_image_url, verification_count, created_at", { count: "exact" });
 
-            // Full-text search using PostgreSQL search_vector
+            // Search using normalized search_text column (requires migration 026)
+            // This uses ILIKE with pg_trgm index for fast, flexible matching
             if (debouncedSearch) {
-                const searchTerm = debouncedSearch.trim();
-
-                // Try full-text search first (requires migration 026)
-                // Format: replace hyphens/underscores with spaces, join with &
-                const ftsQuery = searchTerm
+                // Normalize: lowercase, replace hyphens/underscores with spaces
+                const searchTerm = debouncedSearch
+                    .trim()
+                    .toLowerCase()
                     .replace(/[-_]/g, ' ')
-                    .split(/\s+/)
-                    .filter(t => t.length > 0)
-                    .join(' & ');
+                    .replace(/\s+/g, ' ');
 
-                if (ftsQuery) {
-                    query = query.textSearch('search_vector', ftsQuery, {
-                        type: 'websearch',
-                        config: 'english'
-                    });
+                if (searchTerm) {
+                    query = query.ilike('search_text', `%${searchTerm}%`);
                 }
             }
 

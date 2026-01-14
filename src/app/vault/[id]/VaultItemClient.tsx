@@ -31,6 +31,7 @@ import { RelatedShirts } from "@/components/vault/RelatedShirts";
 import { AddVariantModal } from "@/components/vault/AddVariantModal";
 import { SuggestRelatedModal } from "@/components/vault/SuggestRelatedModal";
 import { ImageLightbox } from "@/components/ui/ImageLightbox";
+import { VaultTags } from "@/components/vault/VaultTags";
 import type { VaultItem } from "@/types/vault";
 
 const getFlagEmoji = (countryName: string) => {
@@ -337,23 +338,8 @@ export default function VaultItemClient({ initialItem }: VaultItemClientProps) {
                             </div>
                         )}
 
-                        {/* Tags */}
-                        {item.tags && item.tags.length > 0 && (
-                            <div className="space-y-2 pt-2">
-                                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Tags</h3>
-                                <div className="flex flex-wrap gap-2">
-                                    {item.tags.map((tag) => (
-                                        <a
-                                            key={tag}
-                                            href={`/vault?search=${encodeURIComponent(tag)}`}
-                                            className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium border border-primary/20 hover:bg-primary/20 hover:border-primary/40 transition-colors cursor-pointer"
-                                        >
-                                            {tag}
-                                        </a>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                        {/* Community Tags with Voting */}
+                        <VaultTags vaultItemId={item.id} className="pt-2" />
 
                         {/* Variants */}
                         <VariantsSection variants={variants} parentShirt={parentShirt} />
