@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useDebounce } from "use-debounce";
+import { useSearchParams } from "next/navigation";
 import { MobileContainer } from "@/components/layout/MobileContainer";
 import { supabase } from "@/lib/supabase/client";
 import { VaultItemCard } from "@/components/vault/VaultItemCard";
@@ -38,13 +39,26 @@ interface QuickFilters {
 }
 
 export default function VaultPage() {
+    // Read URL params for initial filter values
+    const searchParams = useSearchParams();
+    const initialSearch = searchParams.get("search") || "";
+    const initialCategory = searchParams.get("category") || "All";
+    const initialYear = searchParams.get("year") || "";
+    const initialStitch = searchParams.get("stitch") || "";
+    const initialOrigin = searchParams.get("origin") || "";
+    const initialBrand = searchParams.get("brand") || "";
+
     // State
     const [items, setItems] = useState<VaultItemSummary[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
-    const [search, setSearch] = useState("");
+    const [search, setSearch] = useState(initialSearch);
     const [debouncedSearch] = useDebounce(search, 500);
-    const [category, setCategory] = useState("All");
+    const [category, setCategory] = useState(initialCategory);
+    const [yearFilter, setYearFilter] = useState(initialYear);
+    const [stitchFilter, setStitchFilter] = useState(initialStitch);
+    const [originFilter, setOriginFilter] = useState(initialOrigin);
+    const [brandFilter, setBrandFilter] = useState(initialBrand);
     const [sortBy, setSortBy] = useState<SortOption>("verified");
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const [quickFilters, setQuickFilters] = useState<QuickFilters>({
@@ -96,18 +110,38 @@ export default function VaultPage() {
         try {
             let query = supabase
                 .from("the_vault")
-                .select("id, subject, brand, title, slug, category, year, tag_brand, reference_image_url, verification_count, created_at", { count: "exact" });
+                .select("id, subject, brand, title, slug, category, year, tag_brand, stitch_type, origin, reference_image_url, verification_count, created_at", { count: "exact" });
 
             // Search - expanded to include description, tags, category
             if (debouncedSearch) {
                 query = query.or(
-                    `subject.ilike.%${debouncedSearch}%,description.ilike.%${debouncedSearch}%,category.ilike.%${debouncedSearch}%`
+                    `subject.ilike.%${debouncedSearch}%,description.ilike.%${debouncedSearch}%,category.ilike.%${debouncedSearch}%,tag_brand.ilike.%${debouncedSearch}%,brand.ilike.%${debouncedSearch}%`
                 );
             }
 
             // Category filter
             if (category !== "All") {
                 query = query.eq("category", category);
+            }
+
+            // Year filter from URL
+            if (yearFilter) {
+                query = query.eq("year", yearFilter);
+            }
+
+            // Stitch type filter from URL
+            if (stitchFilter) {
+                query = query.ilike("stitch_type", `%${stitchFilter}%`);
+            }
+
+            // Origin filter from URL
+            if (originFilter) {
+                query = query.ilike("origin", `%${originFilter}%`);
+            }
+
+            // Brand filter from URL
+            if (brandFilter) {
+                query = query.ilike("brand", `%${brandFilter}%`);
             }
 
             // Quick filters
@@ -166,7 +200,7 @@ export default function VaultPage() {
             setLoading(false);
             setLoadingMore(false);
         }
-    }, [debouncedSearch, category, sortBy, quickFilters]);
+    }, [debouncedSearch, category, yearFilter, stitchFilter, originFilter, brandFilter, sortBy, quickFilters]);
 
     // Refetch when filters change
     useEffect(() => {
