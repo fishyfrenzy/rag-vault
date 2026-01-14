@@ -30,6 +30,7 @@ import { VariantsSection } from "@/components/vault/VariantCard";
 import { RelatedShirts } from "@/components/vault/RelatedShirts";
 import { AddVariantModal } from "@/components/vault/AddVariantModal";
 import { SuggestRelatedModal } from "@/components/vault/SuggestRelatedModal";
+import { ImageLightbox } from "@/components/ui/ImageLightbox";
 import type { VaultItem } from "@/types/vault";
 
 const getFlagEmoji = (countryName: string) => {
@@ -198,11 +199,13 @@ export default function VaultItemClient({ initialItem }: VaultItemClientProps) {
                     {/* Image */}
                     <div className="aspect-[4/5] rounded-2xl overflow-hidden bg-secondary">
                         {item.reference_image_url ? (
-                            <img
-                                src={item.reference_image_url}
-                                alt={item.subject}
-                                className="w-full h-full object-cover"
-                            />
+                            <ImageLightbox src={item.reference_image_url} alt={item.subject}>
+                                <img
+                                    src={item.reference_image_url}
+                                    alt={item.subject}
+                                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                                />
+                            </ImageLightbox>
                         ) : (
                             <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                                 No Reference Image
