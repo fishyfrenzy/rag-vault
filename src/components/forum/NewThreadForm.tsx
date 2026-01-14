@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { ForumCategory } from "@/types/forum";
-import { Button } from "@/components/ui/button";
+import { GradientButton } from "@/components/ui/GradientButton";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -432,15 +432,14 @@ export function NewThreadForm({ categories, defaultCategory, currentUserId }: Ne
                 <p className="text-xs text-muted-foreground font-medium">
                     Please follow the community guidelines before posting.
                 </p>
-                <Button
+                <GradientButton
                     type="submit"
                     size="lg"
                     disabled={isSubmitting}
-                    className="h-14 px-10 rounded-2xl gap-3 text-base font-black shadow-xl shadow-primary/20"
                 >
                     {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                     Create Thread
-                </Button>
+                </GradientButton>
             </div>
 
             {/* Vault Search Modal */}

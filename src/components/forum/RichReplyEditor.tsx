@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { GradientButton } from "@/components/ui/GradientButton";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -346,10 +347,9 @@ export function RichReplyEditor({ onSave, placeholder = "Write a reply...", curr
                     </button>
                 </div>
 
-                <Button
+                <GradientButton
                     onClick={handleSubmit}
                     disabled={(!content.trim() && uploadedImages.length === 0 && linkedVaultItems.length === 0) || isSubmitting}
-                    className="px-8 gap-2 rounded-xl"
                 >
                     {isSubmitting ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -357,7 +357,7 @@ export function RichReplyEditor({ onSave, placeholder = "Write a reply...", curr
                         <Send className="w-4 h-4" />
                     )}
                     Post Reply
-                </Button>
+                </GradientButton>
             </div>
 
             {/* Vault Search Modal */}

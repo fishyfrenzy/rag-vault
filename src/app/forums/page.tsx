@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { getForumCategories, getRecentThreads } from "@/lib/queries/forum";
 import { ForumCategoryCard } from "@/components/forum/ForumCategoryCard";
 import { RecentThreadCard } from "@/components/forum/RecentThreadCard";
-import { Button } from "@/components/ui/button";
+import { GradientButton } from "@/components/ui/GradientButton";
 import { Plus, MessageSquare, Clock } from "lucide-react";
 import Link from "next/link";
 
@@ -41,10 +41,10 @@ export default async function ForumsPage() {
 
                         <div className="shrink-0 flex gap-4">
                             <Link href="/forums/new">
-                                <Button size="lg" className="gap-3 rounded-2xl h-14 px-8 text-base font-bold shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all">
+                                <GradientButton size="lg">
                                     <Plus className="w-5 h-5" />
                                     New Discussion
-                                </Button>
+                                </GradientButton>
                             </Link>
                         </div>
                     </div>
