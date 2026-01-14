@@ -199,7 +199,7 @@ export default function VaultItemClient({ initialItem }: VaultItemClientProps) {
                     {/* Image */}
                     <div className="aspect-[4/5] rounded-2xl overflow-hidden bg-secondary">
                         {item.reference_image_url ? (
-                            <ImageLightbox src={item.reference_image_url} alt={item.subject}>
+                            <ImageLightbox src={item.reference_image_url} alt={item.subject} className="w-full h-full">
                                 <img
                                     src={item.reference_image_url}
                                     alt={item.subject}
@@ -325,9 +325,13 @@ export default function VaultItemClient({ initialItem }: VaultItemClientProps) {
                                 <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Tags</h3>
                                 <div className="flex flex-wrap gap-2">
                                     {item.tags.map((tag) => (
-                                        <span key={tag} className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium border border-primary/20">
+                                        <a
+                                            key={tag}
+                                            href={`/vault?search=${encodeURIComponent(tag)}`}
+                                            className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium border border-primary/20 hover:bg-primary/20 hover:border-primary/40 transition-colors cursor-pointer"
+                                        >
                                             {tag}
-                                        </span>
+                                        </a>
                                     ))}
                                 </div>
                             </div>
