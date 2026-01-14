@@ -112,11 +112,23 @@ export default function VaultPage() {
                 .from("the_vault")
                 .select("id, subject, brand, title, slug, category, year, tag_brand, stitch_type, origin, reference_image_url, verification_count, created_at", { count: "exact" });
 
-            // Search - expanded to include description, tags, category
+            // Search - expanded to include more fields and handle variations
             if (debouncedSearch) {
-                query = query.or(
-                    `subject.ilike.%${debouncedSearch}%,description.ilike.%${debouncedSearch}%,category.ilike.%${debouncedSearch}%,tag_brand.ilike.%${debouncedSearch}%,brand.ilike.%${debouncedSearch}%`
+                // Normalize search: handle hyphens, create variations
+                const normalizedSearch = debouncedSearch.trim();
+                const withSpaces = normalizedSearch.replace(/-/g, ' ');  // long-sleeve -> long sleeve
+                const withHyphens = normalizedSearch.replace(/\s+/g, '-');  // long sleeve -> long-sleeve
+                const noSpaces = normalizedSearch.replace(/[\s-]/g, '');  // long sleeve -> longsleeve
+
+                // Create OR query with all variations across all text fields
+                const searchTerms = [...new Set([normalizedSearch, withSpaces, withHyphens, noSpaces])];
+                const fields = ['subject', 'description', 'category', 'tag_brand', 'brand', 'body_type', 'material', 'title'];
+
+                const conditions = searchTerms.flatMap(term =>
+                    fields.map(field => `${field}.ilike.%${term}%`)
                 );
+
+                query = query.or(conditions.join(','));
             }
 
             // Category filter
