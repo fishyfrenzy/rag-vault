@@ -23,12 +23,9 @@ interface AddVariantModalProps {
 }
 
 const VARIANT_TYPES = [
-    { value: "back_hit", label: "Back Print" },
-    { value: "front_hit", label: "Front Hit" },
-    { value: "color", label: "Color Variant" },
     { value: "graphic_change", label: "Graphic Change" },
-    { value: "size_variant", label: "Size Variant" },
     { value: "bootleg", label: "Bootleg" },
+    { value: "color_variant", label: "Color Variant" },
     { value: "reprint", label: "Reprint" },
 ];
 
@@ -116,8 +113,8 @@ export function AddVariantModal({ parentItem, userId, onClose, onSuccess }: AddV
                                         key={type.value}
                                         onClick={() => setVariantType(type.value)}
                                         className={`p-3 rounded-lg border text-left text-sm transition-colors ${variantType === type.value
-                                                ? "border-primary bg-primary/10"
-                                                : "border-border hover:border-primary/50"
+                                            ? "border-primary bg-primary/10"
+                                            : "border-border hover:border-primary/50"
                                             }`}
                                     >
                                         {type.label}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { cn } from "@/lib/utils";
@@ -368,23 +368,60 @@ interface AddVaultImageModalProps {
 }
 
 function AddVaultImageModal({ vaultItemId, defaultType, onClose, onSuccess }: AddVaultImageModalProps) {
-    const [imageUrl, setImageUrl] = useState("");
     const [imageType, setImageType] = useState<ImageType>(defaultType);
     const [caption, setCaption] = useState("");
     const [submitting, setSubmitting] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setSelectedFile(file);
+            setPreviewUrl(URL.createObjectURL(file));
+            setError(null);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!imageUrl.trim()) return;
+        if (!selectedFile) {
+            setError("Please select an image");
+            return;
+        }
 
         setSubmitting(true);
         setError(null);
 
         try {
+            // Upload to Supabase storage
+            setUploading(true);
+            const ext = selectedFile.name.split('.').pop();
+            const fileName = `${vaultItemId}/${imageType}/${Date.now()}.${ext}`;
+
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('vault-images')
+                .upload(fileName, selectedFile, {
+                    cacheControl: '3600',
+                    upsert: false
+                });
+
+            if (uploadError) throw new Error(uploadError.message);
+
+            // Get public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('vault-images')
+                .getPublicUrl(fileName);
+
+            setUploading(false);
+
+            // Add to database
             const { data, error: rpcError } = await supabase.rpc("add_vault_image", {
                 p_vault_item_id: vaultItemId,
-                p_image_url: imageUrl.trim(),
+                p_image_url: publicUrl,
                 p_image_type: imageType,
                 p_caption: caption.trim() || null
             });
@@ -397,8 +434,16 @@ function AddVaultImageModal({ vaultItemId, defaultType, onClose, onSuccess }: Ad
             setError(err.message || "Failed to add image");
         } finally {
             setSubmitting(false);
+            setUploading(false);
         }
     };
+
+    // Cleanup preview URL on unmount
+    useEffect(() => {
+        return () => {
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+        };
+    }, [previewUrl]);
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -433,17 +478,46 @@ function AddVaultImageModal({ vaultItemId, defaultType, onClose, onSuccess }: Ad
                         </div>
                     </div>
 
-                    {/* Image URL */}
+                    {/* File Upload */}
                     <div>
-                        <label className="text-sm font-medium text-muted-foreground block mb-2">Image URL</label>
+                        <label className="text-sm font-medium text-muted-foreground block mb-2">Upload Image</label>
                         <input
-                            type="url"
-                            value={imageUrl}
-                            onChange={(e) => setImageUrl(e.target.value)}
-                            placeholder="https://example.com/image.jpg"
-                            className="w-full px-3 py-2 rounded-lg bg-secondary/50 border border-border focus:border-primary focus:outline-none"
-                            required
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileSelect}
+                            className="hidden"
                         />
+
+                        {previewUrl ? (
+                            <div className="relative aspect-[4/5] rounded-lg overflow-hidden bg-secondary">
+                                <Image
+                                    src={previewUrl}
+                                    alt="Preview"
+                                    fill
+                                    className="object-cover"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setSelectedFile(null);
+                                        setPreviewUrl(null);
+                                    }}
+                                    className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 text-white hover:bg-black/80"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="w-full aspect-[4/5] rounded-lg border-2 border-dashed border-border hover:border-primary flex flex-col items-center justify-center gap-2 transition-colors"
+                            >
+                                <Camera className="w-8 h-8 text-muted-foreground" />
+                                <span className="text-sm text-muted-foreground">Click to upload</span>
+                            </button>
+                        )}
                     </div>
 
                     {/* Caption */}
@@ -464,13 +538,21 @@ function AddVaultImageModal({ vaultItemId, defaultType, onClose, onSuccess }: Ad
 
                     <button
                         type="submit"
-                        disabled={submitting || !imageUrl.trim()}
-                        className="w-full py-2 px-4 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={submitting || !selectedFile}
+                        className="w-full py-2 px-4 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
-                        {submitting ? "Adding..." : "Add Image"}
+                        {submitting ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                {uploading ? "Uploading..." : "Saving..."}
+                            </>
+                        ) : (
+                            "Add Image"
+                        )}
                     </button>
                 </form>
             </div>
         </div>
     );
 }
+
