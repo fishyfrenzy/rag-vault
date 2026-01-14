@@ -277,37 +277,55 @@ export default function VaultItemClient({ initialItem }: VaultItemClientProps) {
                         {/* Attributes */}
                         <div className="flex flex-wrap gap-2">
                             {item.year && (
-                                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border/50">
+                                <a
+                                    href={`/vault?year=${encodeURIComponent(item.year)}`}
+                                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border/50 hover:bg-secondary hover:border-primary/30 transition-colors cursor-pointer"
+                                >
                                     <Calendar className="w-4 h-4 text-primary" />
                                     <span className="text-sm font-medium">{item.year}</span>
-                                </div>
+                                </a>
                             )}
                             {item.tag_brand && (
-                                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border/50">
+                                <a
+                                    href={`/vault?search=${encodeURIComponent(item.tag_brand)}`}
+                                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border/50 hover:bg-secondary hover:border-primary/30 transition-colors cursor-pointer"
+                                >
                                     <Tag className="w-4 h-4 text-primary" />
                                     <span className="text-sm font-medium">{item.tag_brand}</span>
-                                </div>
+                                </a>
                             )}
                             {item.stitch_type && (
-                                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border/50">
+                                <a
+                                    href={`/vault?stitch=${encodeURIComponent(item.stitch_type)}`}
+                                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border/50 hover:bg-secondary hover:border-primary/30 transition-colors cursor-pointer"
+                                >
                                     <Link2 className="w-4 h-4 text-primary" />
                                     <span className="text-sm font-medium">{item.stitch_type} Stitch</span>
-                                </div>
+                                </a>
                             )}
                             {item.material && (
-                                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border/50">
+                                <a
+                                    href={`/vault?search=${encodeURIComponent(item.material)}`}
+                                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border/50 hover:bg-secondary hover:border-primary/30 transition-colors cursor-pointer"
+                                >
                                     <span className="text-sm font-medium">🧵 {item.material}</span>
-                                </div>
+                                </a>
                             )}
                             {item.body_type && (
-                                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border/50">
+                                <a
+                                    href={`/vault?search=${encodeURIComponent(item.body_type)}`}
+                                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border/50 hover:bg-secondary hover:border-primary/30 transition-colors cursor-pointer"
+                                >
                                     <span className="text-sm font-medium">👕 {item.body_type}</span>
-                                </div>
+                                </a>
                             )}
                             {item.origin && (
-                                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border/50">
+                                <a
+                                    href={`/vault?origin=${encodeURIComponent(item.origin)}`}
+                                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border/50 hover:bg-secondary hover:border-primary/30 transition-colors cursor-pointer"
+                                >
                                     <span className="text-sm font-medium">{getFlagEmoji(item.origin)} {item.origin}</span>
-                                </div>
+                                </a>
                             )}
                         </div>
 
