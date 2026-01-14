@@ -112,24 +112,23 @@ export default function VaultPage() {
                 .from("the_vault")
                 .select("id, subject, brand, title, slug, category, year, tag_brand, stitch_type, origin, reference_image_url, verification_count, created_at", { count: "exact" });
 
-            // Search - expanded to include more fields and handle variations
+            // Full-text search using PostgreSQL search_vector
             if (debouncedSearch) {
-                // Normalize search: handle hyphens, create variations
-                const normalizedSearch = debouncedSearch.trim().toLowerCase();
-                const withSpaces = normalizedSearch.replace(/-/g, ' ');
-                const withHyphens = normalizedSearch.replace(/\s+/g, '-');
+                const searchTerm = debouncedSearch.trim();
 
-                // Use unique search terms
-                const searchTerms = [...new Set([normalizedSearch, withSpaces, withHyphens])].filter(t => t.length > 0);
+                // Try full-text search first (requires migration 026)
+                // Format: replace hyphens/underscores with spaces, join with &
+                const ftsQuery = searchTerm
+                    .replace(/[-_]/g, ' ')
+                    .split(/\s+/)
+                    .filter(t => t.length > 0)
+                    .join(' & ');
 
-                // Build conditions for main search term on all text fields
-                const fields = ['subject', 'description', 'category', 'tag_brand', 'brand', 'body_type', 'title'];
-                const conditions = searchTerms.flatMap(term =>
-                    fields.map(field => `${field}.ilike.%${term}%`)
-                );
-
-                if (conditions.length > 0) {
-                    query = query.or(conditions.join(','));
+                if (ftsQuery) {
+                    query = query.textSearch('search_vector', ftsQuery, {
+                        type: 'websearch',
+                        config: 'english'
+                    });
                 }
             }
 
