@@ -2,13 +2,12 @@ import { Metadata } from "next";
 import { getThreadBySlug, getThreadPosts, incrementThreadView } from "@/lib/queries/forum";
 import { PostCard } from "@/components/forum/PostCard";
 import { ThreadHeader } from "@/components/forum/ThreadHeader";
-import { ReplyEditor } from "@/components/forum/ReplyEditor";
+import { ThreadReplyEditor } from "@/components/forum/ThreadReplyEditor";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { createReply } from "@/app/forums/actions";
 
 interface ThreadPageProps {
     params: Promise<{ category: string; slug: string }>;
@@ -35,29 +34,27 @@ export default async function ThreadPage({ params }: ThreadPageProps) {
 
     const posts = await getThreadPosts(thread.id);
 
-    const { data: { user } } = await (await createClient()).auth.getUser();
-    const profile = user ? (await (await createClient()).from('profiles').select('display_name').eq('id', user.id).single()).data : null;
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const profile = user ? (await supabase.from('profiles').select('display_name').eq('id', user.id).single()).data : null;
 
     // First post is shown specially (it's the thread content)
     const opPost = {
-        id: thread.id, // Using thread ID as original post ID for simplicity in UI
+        id: thread.id,
         thread_id: thread.id,
         author_id: thread.author_id,
         author: thread.author,
         content: thread.content,
         created_at: thread.created_at,
         updated_at: thread.updated_at,
-        upvotes: 0, // Threads will have their own voting in future, using posts for now
+        upvotes: 0,
         downvotes: 0,
         score: 0,
         is_edited: false,
         parent_post_id: null
     };
 
-    // Note: Since this is a server component, we need to pass a client-safe way to call the action
-    // or wrap it. The pathname is needed for revalidation.
-    // For now, I'll pass the function directly.
-    const currentPath = `/forums/${category}/${slug}`; // Added currentPath
+    const currentPath = `/forums/${category}/${slug}`;
 
     return (
         <div className="min-h-screen pb-24">
@@ -102,14 +99,12 @@ export default async function ThreadPage({ params }: ThreadPageProps) {
                 <div className="mt-12 pt-12 border-t border-border/40">
                     {user ? (
                         <div className="space-y-6">
-                            <h3 className="text-xl font-black tracking-tight">Your Reply</h3>
-                            <ReplyEditor
-                                placeholder="Share your thoughts, advice, or appreciation..."
-                                currentUserDisplayName={profile?.display_name || user.email}
-                                onSave={async (content) => {
-                                    "use server";
-                                    await createReply(thread.id, content, currentPath); // Modified onSave prop
-                                }}
+                            <h3 className="text-xl font-extrabold tracking-tight">Your Reply</h3>
+                            <ThreadReplyEditor
+                                threadId={thread.id}
+                                currentPath={currentPath}
+                                currentUserDisplayName={profile?.display_name || user.email || null}
+                                currentUserId={user.id}
                             />
                         </div>
                     ) : (

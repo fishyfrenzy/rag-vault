@@ -99,6 +99,54 @@ export async function getThreadPosts(threadId: string) {
     return data as ForumPost[];
 }
 
+export async function getRecentThreads(limit = 5) {
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+        .from("forum_threads")
+        .select(`
+            *,
+            author:profiles(display_name, avatar_url, karma_tier),
+            category:forum_categories(name, slug, color, icon),
+            forum_posts(count)
+        `)
+        .order("last_post_at", { ascending: false })
+        .limit(limit);
+
+    if (error) throw error;
+
+    return data.map(thread => ({
+        ...thread,
+        reply_count: thread.forum_posts?.[0]?.count || 0
+    })) as ForumThread[];
+}
+
+export async function searchUsers(query: string, limit = 5) {
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+        .from("profiles")
+        .select("id, display_name, avatar_url")
+        .ilike("display_name", `%${query}%`)
+        .limit(limit);
+
+    if (error) throw error;
+    return data;
+}
+
+export async function searchVaultItems(query: string, limit = 10) {
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+        .from("the_vault")
+        .select("id, subject, slug, reference_image_url, category")
+        .ilike("subject", `%${query}%`)
+        .limit(limit);
+
+    if (error) throw error;
+    return data;
+}
+
 /**
  * CLIENT-SIDE ACTIONS (Helper placeholders for mutations)
  * These would typically be called from Server Actions or client components

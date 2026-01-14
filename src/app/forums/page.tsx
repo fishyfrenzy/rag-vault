@@ -1,8 +1,9 @@
 import { Metadata } from "next";
-import { getForumCategories } from "@/lib/queries/forum";
+import { getForumCategories, getRecentThreads } from "@/lib/queries/forum";
 import { ForumCategoryCard } from "@/components/forum/ForumCategoryCard";
+import { RecentThreadCard } from "@/components/forum/RecentThreadCard";
 import { Button } from "@/components/ui/button";
-import { Plus, MessageSquare } from "lucide-react";
+import { Plus, MessageSquare, Clock } from "lucide-react";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -11,7 +12,10 @@ export const metadata: Metadata = {
 };
 
 export default async function ForumsPage() {
-    const categories = await getForumCategories();
+    const [categories, recentThreads] = await Promise.all([
+        getForumCategories(),
+        getRecentThreads(5)
+    ]);
 
     return (
         <div className="min-h-screen pb-24">
@@ -48,12 +52,34 @@ export default async function ForumsPage() {
             </div>
 
             <div className="container max-w-6xl mx-auto px-6 py-16">
+                {/* Recent Threads Section */}
+                {recentThreads.length > 0 && (
+                    <div className="mb-16">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center border border-border/60">
+                                <Clock className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <h2 className="text-2xl font-extrabold tracking-tight">Recent Activity</h2>
+                                <p className="text-sm text-muted-foreground">Jump into the latest discussions</p>
+                            </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-4">
+                            {recentThreads.map((thread) => (
+                                <RecentThreadCard key={thread.id} thread={thread} />
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Categories Section */}
                 <div className="flex items-center gap-3 mb-10">
                     <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center border border-border/60">
                         <MessageSquare className="w-5 h-5" />
                     </div>
                     <div>
-                        <h2 className="text-2xl font-black tracking-tight">Browse Categories</h2>
+                        <h2 className="text-2xl font-extrabold tracking-tight">Browse Categories</h2>
                         <p className="text-sm text-muted-foreground">Select a category to start browsing discussions</p>
                     </div>
                 </div>
@@ -73,7 +99,7 @@ export default async function ForumsPage() {
                     </div>
                 )}
 
-                {/* Community Stats Footer (Optional) */}
+                {/* Community Stats Footer */}
                 <div className="mt-24 p-8 rounded-3xl bg-secondary/20 border border-border/40 flex flex-wrap justify-center md:justify-around gap-12 text-center">
                     <div className="space-y-1">
                         <p className="text-3xl font-black tracking-tighter">1.2k</p>

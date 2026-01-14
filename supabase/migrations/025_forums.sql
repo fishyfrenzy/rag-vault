@@ -308,3 +308,21 @@ INSERT INTO forum_categories (name, slug, description, icon, color, display_orde
     ('Tag ID Guide', 'tag-id', 'Deep dives into tag dating and brand identification.', '🏷️', 'red', 5),
     ('Market Talk', 'market', 'Discuss pricing, trends, and the vintage business.', '📈', 'orange', 6)
 ON CONFLICT (slug) DO NOTHING;
+
+-- 13. STORAGE BUCKET FOR FORUM IMAGES
+-- Note: This needs to be run manually in Supabase Dashboard > Storage
+-- Create a bucket named 'forum-images' with public access
+
+-- If using SQL (may require superuser):
+-- INSERT INTO storage.buckets (id, name, public) VALUES ('forum-images', 'forum-images', true);
+
+-- Storage policies for forum-images bucket:
+-- Allow authenticated users to upload
+-- CREATE POLICY "Authenticated users can upload forum images"
+-- ON storage.objects FOR INSERT
+-- WITH CHECK (bucket_id = 'forum-images' AND auth.role() = 'authenticated');
+
+-- Allow public read access
+-- CREATE POLICY "Public read access for forum images"
+-- ON storage.objects FOR SELECT
+-- USING (bucket_id = 'forum-images');
