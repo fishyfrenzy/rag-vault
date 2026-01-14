@@ -280,7 +280,17 @@ function VaultPageContent() {
                     <Input
                         placeholder="Search shirts, descriptions, tags..."
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                        onChange={(e) => {
+                            setSearch(e.target.value);
+                            // Clear URL-based filters when user starts typing
+                            // This prevents conflicting filters
+                            if (yearFilter || stitchFilter || originFilter || brandFilter) {
+                                setYearFilter("");
+                                setStitchFilter("");
+                                setOriginFilter("");
+                                setBrandFilter("");
+                            }
+                        }}
                         className="pl-9 pr-4"
                     />
                 </div>
