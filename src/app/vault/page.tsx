@@ -115,20 +115,22 @@ export default function VaultPage() {
             // Search - expanded to include more fields and handle variations
             if (debouncedSearch) {
                 // Normalize search: handle hyphens, create variations
-                const normalizedSearch = debouncedSearch.trim();
-                const withSpaces = normalizedSearch.replace(/-/g, ' ');  // long-sleeve -> long sleeve
-                const withHyphens = normalizedSearch.replace(/\s+/g, '-');  // long sleeve -> long-sleeve
-                const noSpaces = normalizedSearch.replace(/[\s-]/g, '');  // long sleeve -> longsleeve
+                const normalizedSearch = debouncedSearch.trim().toLowerCase();
+                const withSpaces = normalizedSearch.replace(/-/g, ' ');
+                const withHyphens = normalizedSearch.replace(/\s+/g, '-');
 
-                // Create OR query with all variations across all text fields
-                const searchTerms = [...new Set([normalizedSearch, withSpaces, withHyphens, noSpaces])];
-                const fields = ['subject', 'description', 'category', 'tag_brand', 'brand', 'body_type', 'material', 'title'];
+                // Use unique search terms
+                const searchTerms = [...new Set([normalizedSearch, withSpaces, withHyphens])].filter(t => t.length > 0);
 
+                // Build conditions for main search term on all text fields
+                const fields = ['subject', 'description', 'category', 'tag_brand', 'brand', 'body_type', 'title'];
                 const conditions = searchTerms.flatMap(term =>
                     fields.map(field => `${field}.ilike.%${term}%`)
                 );
 
-                query = query.or(conditions.join(','));
+                if (conditions.length > 0) {
+                    query = query.or(conditions.join(','));
+                }
             }
 
             // Category filter
