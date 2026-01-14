@@ -52,6 +52,7 @@ export default async function NewThreadPage({ searchParams }: NewThreadPageProps
                 <NewThreadForm
                     categories={categories}
                     defaultCategory={defaultCategory?.id}
+                    currentUserId={user.id}
                 />
             </div>
         </div>
