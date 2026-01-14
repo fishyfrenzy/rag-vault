@@ -14,6 +14,7 @@ import {
     Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { InventoryImageUpload } from "@/components/inventory/InventoryImageUpload";
 
 interface VaultMatch {
     id: string;
@@ -70,6 +71,13 @@ export function AddShirtForm({ userId, onSuccess, onCancel, initialImageUrls = [
     const [description, setDescription] = useState("");
     const [listingType, setListingType] = useState("collection");
     const [price, setPrice] = useState("");
+
+    // Images
+    const [images, setImages] = useState<{
+        front: string | null;
+        back: string | null;
+        tag: string | null;
+    }>({ front: null, back: null, tag: null });
 
     // Vault matching
     const [vaultMatches, setVaultMatches] = useState<VaultMatch[]>([]);
@@ -169,9 +177,9 @@ export function AddShirtForm({ userId, onSuccess, onCancel, initialImageUrls = [
                 material: material || null,
                 flaws: flaws || null,
                 description: description || null,
-                images: initialImageUrls.length > 0
-                    ? initialImageUrls.map((url, i) => ({ view: `image-${i + 1}`, url }))
-                    : null,
+                front_image_url: images.front,
+                back_image_url: images.back,
+                tag_image_url: images.tag,
             });
 
         if (invError) {
@@ -200,6 +208,12 @@ export function AddShirtForm({ userId, onSuccess, onCancel, initialImageUrls = [
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Image Upload - Front/Back/Tag */}
+                <InventoryImageUpload
+                    userId={userId}
+                    images={images}
+                    onImagesChange={setImages}
+                />
                 {/* Subject with vault search */}
                 <div className="space-y-2">
                     <label className="text-sm font-medium">
