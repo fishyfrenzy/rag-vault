@@ -33,6 +33,7 @@ import { SuggestRelatedModal } from "@/components/vault/SuggestRelatedModal";
 import { ImageLightbox } from "@/components/ui/ImageLightbox";
 import { VaultTags } from "@/components/vault/VaultTags";
 import { VaultImageGallery } from "@/components/vault/VaultImageGallery";
+import { EditableSection } from "@/components/vault/InlineEditField";
 import type { VaultItem } from "@/types/vault";
 
 const getFlagEmoji = (countryName: string) => {
@@ -320,13 +321,16 @@ export default function VaultItemClient({ initialItem }: VaultItemClientProps) {
                             )}
                         </div>
 
-                        {/* Description */}
-                        {item.description && (
-                            <div className="space-y-2 pt-2">
-                                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Description</h3>
-                                <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">{item.description}</p>
-                            </div>
-                        )}
+                        {/* Description - Inline Editable */}
+                        <EditableSection
+                            label="Description"
+                            vaultItemId={item.id}
+                            fieldName="description"
+                            currentValue={item.description}
+                            fieldType="textarea"
+                            placeholder="Add a description about this item's history, significance, or details..."
+                            className="pt-2"
+                        />
 
                         {/* Community Tags with Voting */}
                         <VaultTags vaultItemId={item.id} className="pt-2" />
