@@ -8,6 +8,8 @@ import Image from "next/image";
 interface VaultItemCardProps {
     subject: string;
     category: string;
+    year?: string | null;
+    brand?: string | null;
     size?: string;
     price?: number | null;
     condition?: string;
@@ -20,6 +22,8 @@ interface VaultItemCardProps {
 export function VaultItemCard({
     subject,
     category,
+    year,
+    brand,
     size,
     price,
     condition,
@@ -30,6 +34,14 @@ export function VaultItemCard({
 }: VaultItemCardProps) {
     const [imageLoaded, setImageLoaded] = useState(false);
     const [imageError, setImageError] = useState(false);
+
+    // Build display title: prefer subject, but if brand exists and subject doesn't include it, prepend brand
+    const displayTitle = brand && !subject.toLowerCase().includes(brand.toLowerCase())
+        ? `${brand} ${subject}`
+        : subject;
+
+    // Format year for display
+    const displayYear = year ? year.toString().split(',')[0] : null;
 
     return (
         <div
@@ -45,7 +57,7 @@ export function VaultItemCard({
                         )}
                         <Image
                             src={imageUrl}
-                            alt={subject}
+                            alt={displayTitle}
                             fill
                             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                             className={cn(
@@ -61,7 +73,7 @@ export function VaultItemCard({
                     </>
                 ) : (
                     <div className="flex h-full w-full items-center justify-center text-4xl text-muted-foreground/20 font-bold">
-                        {subject.charAt(0).toUpperCase()}
+                        {displayTitle.charAt(0).toUpperCase()}
                     </div>
                 )}
 
@@ -89,13 +101,14 @@ export function VaultItemCard({
             </div>
 
             <div className="space-y-1">
-                <h3 className="font-semibold text-sm leading-none truncate group-hover:text-primary transition-colors">
-                    {subject}
+                <h3 className="font-semibold text-sm leading-tight line-clamp-1 group-hover:text-primary transition-colors">
+                    {displayTitle}
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                    {category} {condition ? `• ${condition}` : ''}
+                    {displayYear && `${displayYear} · `}{category}{condition ? ` · ${condition}` : ''}
                 </p>
             </div>
         </div>
     );
 }
+

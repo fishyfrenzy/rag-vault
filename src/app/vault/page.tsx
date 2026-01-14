@@ -412,8 +412,10 @@ export default function VaultPage() {
                                     <Link href={`/vault/${item.slug || item.id}`} key={item.id}>
                                         <div className="relative">
                                             <VaultItemCard
-                                                subject={item.title || item.subject}
+                                                subject={item.subject}
                                                 category={item.category}
+                                                year={item.year}
+                                                brand={item.brand}
                                                 imageUrl={item.reference_image_url}
                                                 priority={index < 4}
                                             />
