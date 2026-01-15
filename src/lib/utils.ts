@@ -16,6 +16,20 @@ export function formatYearRange(start: number | null, end: number | null): strin
 }
 
 /**
+ * Expand year range to comma-separated list for search
+ * Examples: 1984, 1994 -> "1984, 1985, 1986, ..., 1994"
+ */
+export function expandYearRange(start: number | null, end: number | null): string {
+  if (!start) return '';
+  if (!end || start === end) return start.toString();
+  const years: number[] = [];
+  for (let y = start; y <= end; y++) {
+    years.push(y);
+  }
+  return years.join(', ');
+}
+
+/**
  * Format price range for display
  * Examples: "$50-$100", "$150+"
  */
