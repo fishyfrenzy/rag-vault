@@ -6,6 +6,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { cn } from "@/lib/utils";
 import { ThumbsUp, ThumbsDown, Plus, X, Camera, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import Image from "next/image";
+import { ImageLightbox } from "@/components/ui/ImageLightbox";
 
 interface VaultImage {
     id: string;
@@ -167,14 +168,16 @@ export function VaultImageGallery({ vaultItemId, fallbackImageUrl, className }: 
             {/* Main Image Display */}
             <div className="relative aspect-[4/5] bg-secondary/50 rounded-xl overflow-hidden group">
                 {imageUrl && (
-                    <Image
-                        src={imageUrl}
-                        alt={`${activeType} view`}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                        priority
-                    />
+                    <ImageLightbox src={imageUrl} alt={`${activeType} view`}>
+                        <Image
+                            src={imageUrl}
+                            alt={`${activeType} view`}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 768px) 100vw, 50vw"
+                            priority
+                        />
+                    </ImageLightbox>
                 )}
 
                 {/* Navigation arrows for alternatives */}
