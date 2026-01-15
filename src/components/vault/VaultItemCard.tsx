@@ -2,8 +2,30 @@
 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, memo } from "react";
 import Image from "next/image";
+
+// Shimmer SVG for blur placeholder - creates smooth loading effect
+const shimmer = (w: number, h: number) => `
+<svg width="${w}" height="${h}" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <linearGradient id="g">
+      <stop stop-color="#1a1a1a" offset="20%" />
+      <stop stop-color="#2a2a2a" offset="50%" />
+      <stop stop-color="#1a1a1a" offset="70%" />
+    </linearGradient>
+  </defs>
+  <rect width="${w}" height="${h}" fill="#1a1a1a" />
+  <rect id="r" width="${w}" height="${h}" fill="url(#g)" />
+  <animate xlink:href="#r" attributeName="x" from="-${w}" to="${w}" dur="1s" repeatCount="indefinite"  />
+</svg>`;
+
+const toBase64 = (str: string) =>
+    typeof window === "undefined"
+        ? Buffer.from(str).toString("base64")
+        : window.btoa(str);
+
+const blurDataURL = `data:image/svg+xml;base64,${toBase64(shimmer(400, 500))}`;
 
 interface VaultItemCardProps {
     subject: string;
@@ -19,7 +41,7 @@ interface VaultItemCardProps {
     priority?: boolean;
 }
 
-export function VaultItemCard({
+export const VaultItemCard = memo(function VaultItemCard({
     subject,
     category,
     year,
@@ -32,10 +54,9 @@ export function VaultItemCard({
     className,
     priority = false
 }: VaultItemCardProps) {
-    const [imageLoaded, setImageLoaded] = useState(false);
     const [imageError, setImageError] = useState(false);
 
-    // Build display title: prefer subject, but if brand exists and subject doesn't include it, prepend brand
+    // Build display title
     const displayTitle = brand && !subject.toLowerCase().includes(brand.toLowerCase())
         ? `${brand} ${subject}`
         : subject;
@@ -50,27 +71,21 @@ export function VaultItemCard({
         >
             <div className="aspect-[4/5] w-full overflow-hidden rounded-xl bg-secondary/50 relative">
                 {imageUrl && !imageError ? (
-                    <>
-                        {/* Loading skeleton */}
-                        {!imageLoaded && (
-                            <div className="absolute inset-0 animate-pulse bg-muted" />
+                    <Image
+                        src={imageUrl}
+                        alt={displayTitle}
+                        fill
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                        className={cn(
+                            "object-cover transition-transform duration-300",
+                            "group-hover:scale-105"
                         )}
-                        <Image
-                            src={imageUrl}
-                            alt={displayTitle}
-                            fill
-                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                            className={cn(
-                                "object-cover transition-all duration-300",
-                                "group-hover:scale-105",
-                                imageLoaded ? "opacity-100" : "opacity-0"
-                            )}
-                            onLoad={() => setImageLoaded(true)}
-                            onError={() => setImageError(true)}
-                            loading={priority ? "eager" : "lazy"}
-                            priority={priority}
-                        />
-                    </>
+                        onError={() => setImageError(true)}
+                        loading={priority ? "eager" : "lazy"}
+                        priority={priority}
+                        placeholder="blur"
+                        blurDataURL={blurDataURL}
+                    />
                 ) : (
                     <div className="flex h-full w-full items-center justify-center text-4xl text-muted-foreground/20 font-bold">
                         {displayTitle.charAt(0).toUpperCase()}
@@ -110,5 +125,4 @@ export function VaultItemCard({
             </div>
         </div>
     );
-}
-
+});
