@@ -1,6 +1,17 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Routes that require authentication
+const PROTECTED_ROUTES = [
+    '/vault/new',
+    '/my-collection',
+    '/sell',
+    '/profile',
+    '/forums/new',
+    '/articles/new',
+    '/onboarding',
+]
+
 export async function middleware(request: NextRequest) {
     let response = NextResponse.next({
         request: {
@@ -19,7 +30,7 @@ export async function middleware(request: NextRequest) {
                     return request.cookies.getAll()
                 },
                 setAll(cookiesToSet) {
-                    cookiesToSet.forEach(({ name, value, options }) => {
+                    cookiesToSet.forEach(({ name, value }) => {
                         request.cookies.set(name, value)
                     })
                     response = NextResponse.next({
@@ -36,6 +47,17 @@ export async function middleware(request: NextRequest) {
     const {
         data: { user },
     } = await supabase.auth.getUser()
+
+    // Check if trying to access a protected route without auth
+    const isProtectedRoute = PROTECTED_ROUTES.some(route =>
+        request.nextUrl.pathname.startsWith(route)
+    )
+
+    if (isProtectedRoute && !user) {
+        const loginUrl = new URL('/login', request.url)
+        loginUrl.searchParams.set('redirect', request.nextUrl.pathname)
+        return NextResponse.redirect(loginUrl)
+    }
 
     return response
 }

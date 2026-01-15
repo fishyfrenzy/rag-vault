@@ -4,13 +4,14 @@ import { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import { useDebounce } from "use-debounce";
 import { useSearchParams } from "next/navigation";
 import { MobileContainer } from "@/components/layout/MobileContainer";
-import { supabase } from "@/lib/supabase/client";
+import { useVaultItems, flattenVaultPages, type VaultFilters } from "@/lib/hooks/useVaultItems";
 import { VaultItemCard } from "@/components/vault/VaultItemCard";
 import { VaultItemListCard } from "@/components/vault/VaultItemListCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FilterPill, QuickFilter } from "@/components/ui/FilterPill";
 import { EmptyState, NoResultsState } from "@/components/ui/EmptyState";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { SkeletonCardGrid } from "@/components/ui/skeleton";
 import {
     Search,
@@ -27,10 +28,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import type { VaultItemSummary, SortOption } from "@/types/vault";
+import type { SortOption } from "@/types/vault";
 import { VAULT_CATEGORIES, SORT_OPTIONS } from "@/types/vault";
-
-const ITEMS_PER_PAGE = 24;
 
 interface QuickFilters {
     verifiedOnly: boolean;
@@ -54,7 +53,6 @@ export default function VaultPage() {
 }
 
 function VaultPageContent() {
-
     // Read URL params for initial filter values
     const searchParams = useSearchParams();
     const initialSearch = searchParams.get("search") || "";
@@ -64,10 +62,7 @@ function VaultPageContent() {
     const initialOrigin = searchParams.get("origin") || "";
     const initialBrand = searchParams.get("brand") || "";
 
-    // State
-    const [items, setItems] = useState<VaultItemSummary[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [loadingMore, setLoadingMore] = useState(false);
+    // Filter State
     const [search, setSearch] = useState(initialSearch);
     const [debouncedSearch] = useDebounce(search, 500);
     const [category, setCategory] = useState(initialCategory);
@@ -76,15 +71,15 @@ function VaultPageContent() {
     const [originFilter, setOriginFilter] = useState(initialOrigin);
     const [brandFilter, setBrandFilter] = useState(initialBrand);
     const [sortBy, setSortBy] = useState<SortOption>("verified");
-    const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const [quickFilters, setQuickFilters] = useState<QuickFilters>({
         verifiedOnly: false,
         hasImage: false,
         newThisWeek: false,
     });
+
+    // UI State
+    const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const [showSortDropdown, setShowSortDropdown] = useState(false);
-    const [hasMore, setHasMore] = useState(true);
-    const [totalCount, setTotalCount] = useState(0);
     const [isScrolled, setIsScrolled] = useState(false);
 
     // Refs
@@ -92,6 +87,33 @@ function VaultPageContent() {
     const categoryScrollRef = useRef<HTMLDivElement>(null);
     const [showLeftFade, setShowLeftFade] = useState(false);
     const [showRightFade, setShowRightFade] = useState(true);
+
+    // Build filters object for query
+    const filters: VaultFilters = {
+        search: debouncedSearch,
+        category,
+        yearFilter,
+        stitchFilter,
+        originFilter,
+        brandFilter,
+        sortBy,
+        quickFilters,
+    };
+
+    // Use TanStack Query for data fetching
+    const {
+        data,
+        error,
+        isLoading,
+        isFetchingNextPage,
+        hasNextPage,
+        fetchNextPage,
+        refetch,
+    } = useVaultItems(filters);
+
+    // Flatten pages into single array
+    const items = flattenVaultPages(data?.pages);
+    const totalCount = data?.pages[0]?.totalCount ?? 0;
 
     // Handle scroll for sticky header shadow
     useEffect(() => {
@@ -118,126 +140,6 @@ function VaultPageContent() {
         return () => el.removeEventListener("scroll", updateScrollFades);
     }, [updateScrollFades]);
 
-    // Fetch items
-    const fetchItems = useCallback(async (offset = 0, append = false) => {
-        if (offset === 0) setLoading(true);
-        else setLoadingMore(true);
-
-        try {
-            let query = supabase
-                .from("the_vault")
-                .select("id, subject, brand, title, slug, category, year, tag_brand, stitch_type, origin, reference_image_url, verification_count, created_at", { count: "exact" });
-
-            // Search using normalized search_text column (requires migration 026)
-            // This uses ILIKE with pg_trgm index for fast, flexible matching
-            if (debouncedSearch) {
-                // Normalize: lowercase, replace hyphens/underscores with spaces
-                const searchTerm = debouncedSearch
-                    .trim()
-                    .toLowerCase()
-                    .replace(/[-_]/g, ' ')
-                    .replace(/\s+/g, ' ');
-
-                if (searchTerm) {
-                    query = query.ilike('search_text', `%${searchTerm}%`);
-                }
-            }
-
-            // Category filter
-            if (category !== "All") {
-                query = query.eq("category", category);
-            }
-
-            // Year filter from URL
-            if (yearFilter) {
-                query = query.eq("year", yearFilter);
-            }
-
-            // Stitch type filter from URL
-            if (stitchFilter) {
-                query = query.ilike("stitch_type", `%${stitchFilter}%`);
-            }
-
-            // Origin filter from URL
-            if (originFilter) {
-                query = query.ilike("origin", `%${originFilter}%`);
-            }
-
-            // Brand filter from URL
-            if (brandFilter) {
-                query = query.ilike("brand", `%${brandFilter}%`);
-            }
-
-            // Quick filters
-            if (quickFilters.verifiedOnly) {
-                query = query.gte("verification_count", 3);
-            }
-            if (quickFilters.hasImage) {
-                query = query.not("reference_image_url", "is", null);
-            }
-            if (quickFilters.newThisWeek) {
-                const weekAgo = new Date();
-                weekAgo.setDate(weekAgo.getDate() - 7);
-                query = query.gte("created_at", weekAgo.toISOString());
-            }
-
-            // Sorting
-            switch (sortBy) {
-                case "newest":
-                    query = query.order("created_at", { ascending: false });
-                    break;
-                case "alphabetical":
-                    query = query.order("subject", { ascending: true });
-                    break;
-                case "score":
-                    query = query.order("score", { ascending: false });
-                    break;
-                case "verified":
-                default:
-                    query = query
-                        .order("verification_count", { ascending: false })
-                        .order("created_at", { ascending: false });
-                    break;
-            }
-
-            // Pagination
-            query = query.range(offset, offset + ITEMS_PER_PAGE - 1);
-
-            const { data, error, count } = await query;
-
-            if (error) {
-                console.error("Error fetching vault:", error);
-                return;
-            }
-
-            const newItems = (data as VaultItemSummary[]) || [];
-
-            if (append) {
-                setItems(prev => [...prev, ...newItems]);
-            } else {
-                setItems(newItems);
-            }
-
-            setTotalCount(count || 0);
-            setHasMore(offset + newItems.length < (count || 0));
-        } finally {
-            setLoading(false);
-            setLoadingMore(false);
-        }
-    }, [debouncedSearch, category, yearFilter, stitchFilter, originFilter, brandFilter, sortBy, quickFilters]);
-
-    // Refetch when filters change
-    useEffect(() => {
-        fetchItems(0, false);
-    }, [fetchItems]);
-
-    // Load more handler
-    const handleLoadMore = () => {
-        if (!loadingMore && hasMore) {
-            fetchItems(items.length, true);
-        }
-    };
-
     // Toggle quick filter
     const toggleQuickFilter = (key: keyof QuickFilters) => {
         setQuickFilters(prev => ({ ...prev, [key]: !prev[key] }));
@@ -260,7 +162,7 @@ function VaultPageContent() {
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold">The Vault</h1>
-                        {totalCount > 0 && !loading && (
+                        {totalCount > 0 && !isLoading && (
                             <p className="text-xs text-muted-foreground mt-0.5">
                                 {totalCount.toLocaleString()} items
                             </p>
@@ -283,7 +185,6 @@ function VaultPageContent() {
                         onChange={(e) => {
                             setSearch(e.target.value);
                             // Clear URL-based filters when user starts typing
-                            // This prevents conflicting filters
                             if (yearFilter || stitchFilter || originFilter || brandFilter) {
                                 setYearFilter("");
                                 setStitchFilter("");
@@ -412,8 +313,14 @@ function VaultPageContent() {
 
             {/* Content */}
             <div className="px-6 py-4">
-                {/* Loading State */}
-                {loading ? (
+                {/* Error State */}
+                {error ? (
+                    <ErrorState
+                        message={error instanceof Error ? error.message : "Failed to load vault items"}
+                        onRetry={() => refetch()}
+                    />
+                ) : isLoading ? (
+                    /* Loading State */
                     <SkeletonCardGrid count={8} />
                 ) : items.length === 0 ? (
                     /* Empty State */
@@ -465,15 +372,15 @@ function VaultPageContent() {
                         )}
 
                         {/* Load More */}
-                        {hasMore && (
+                        {hasNextPage && (
                             <div className="flex justify-center mt-8">
                                 <Button
                                     variant="outline"
-                                    onClick={handleLoadMore}
-                                    disabled={loadingMore}
+                                    onClick={() => fetchNextPage()}
+                                    disabled={isFetchingNextPage}
                                     className="gap-2"
                                 >
-                                    {loadingMore ? (
+                                    {isFetchingNextPage ? (
                                         <>
                                             <Loader2 className="w-4 h-4 animate-spin" />
                                             Loading...

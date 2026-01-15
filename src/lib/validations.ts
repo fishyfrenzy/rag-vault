@@ -82,6 +82,24 @@ export const createCollectionSchema = z.object({
 
 export type CreateCollectionInput = z.infer<typeof createCollectionSchema>;
 
+// === FORUM SCHEMAS ===
+
+export const createThreadSchema = z.object({
+    categoryId: z.string().uuid("Invalid category"),
+    title: z.string().min(3, "Title must be at least 3 characters").max(200, "Title too long"),
+    content: z.string().min(10, "Content must be at least 10 characters").max(10000, "Content too long"),
+    linkedVaultId: z.string().uuid().optional().nullable(),
+});
+
+export type CreateThreadInput = z.infer<typeof createThreadSchema>;
+
+export const createReplySchema = z.object({
+    threadId: z.string().uuid("Invalid thread"),
+    content: z.string().min(1, "Reply cannot be empty").max(5000, "Reply too long"),
+});
+
+export type CreateReplyInput = z.infer<typeof createReplySchema>;
+
 // === HELPER FUNCTIONS ===
 
 /**
