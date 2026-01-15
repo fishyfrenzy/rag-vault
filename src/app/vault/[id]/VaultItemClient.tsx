@@ -34,6 +34,7 @@ import { ImageLightbox } from "@/components/ui/ImageLightbox";
 import { VaultTags } from "@/components/vault/VaultTags";
 import { VaultImageGallery } from "@/components/vault/VaultImageGallery";
 import { EditableSection } from "@/components/vault/InlineEditField";
+import { formatYearRange } from "@/lib/utils";
 import type { VaultItem } from "@/types/vault";
 
 const getFlagEmoji = (countryName: string) => {
@@ -268,13 +269,13 @@ export default function VaultItemClient({ initialItem }: VaultItemClientProps) {
 
                         {/* Attributes */}
                         <div className="flex flex-wrap gap-2">
-                            {item.year && (
+                            {item.year_start && (
                                 <a
-                                    href={`/vault?year=${encodeURIComponent(item.year)}`}
+                                    href={`/vault?year=${item.year_start}`}
                                     className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border/50 hover:bg-secondary hover:border-primary/30 transition-colors cursor-pointer"
                                 >
                                     <Calendar className="w-4 h-4 text-primary" />
-                                    <span className="text-sm font-medium">{item.year}</span>
+                                    <span className="text-sm font-medium">{formatYearRange(item.year_start, item.year_end)}</span>
                                 </a>
                             )}
                             {item.tag_brand && (
@@ -426,7 +427,8 @@ export default function VaultItemClient({ initialItem }: VaultItemClientProps) {
                             title: item.title,
                             subject: item.subject,
                             category: item.category,
-                            year: item.year,
+                            year_start: item.year_start,
+                            year_end: item.year_end,
                             tag_brand: item.tag_brand,
                             description: item.description,
                             reference_image_url: item.reference_image_url,

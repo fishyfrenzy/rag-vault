@@ -15,7 +15,8 @@ interface EditProposalModalProps {
         title: string | null;
         subject: string;
         category: string;
-        year: string | number | null;
+        year_start: number | null;
+        year_end: number | null;
         tag_brand: string | null;
         description: string | null;
         reference_image_url?: string | null;
@@ -28,7 +29,8 @@ const EDITABLE_FIELDS = [
     { key: "brand", label: "Brand / Artist", type: "text", placeholder: "e.g. Nirvana, Harley-Davidson" },
     { key: "title", label: "Title", type: "text", placeholder: "e.g. Heart Shaped Box, In Utero Tour" },
     { key: "category", label: "Category", type: "select", options: ["Music", "Motorcycle", "Movie", "Art", "Sport", "Advertising", "Other"] },
-    { key: "year", label: "Year (or Range)", type: "text", placeholder: "e.g. 1988 or 1988-1991" },
+    { key: "year_start", label: "Year Start", type: "number", placeholder: "e.g. 1988" },
+    { key: "year_end", label: "Year End", type: "number", placeholder: "e.g. 1991 (leave empty if single year)" },
     { key: "tag_brand", label: "Tag Brand", type: "text" },
     { key: "description", label: "Description", type: "textarea", placeholder: "Detailed description of the shirt..." },
     { key: "reference_image_url", label: "Main Image", type: "image" },

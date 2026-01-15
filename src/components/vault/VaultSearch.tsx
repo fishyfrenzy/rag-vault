@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
+import { formatYearRange } from "@/lib/utils";
 import type { VaultItem } from "@/types/vault";
 
 interface VaultSearchProps {
@@ -82,7 +83,7 @@ export function VaultSearch({ onSelect, onCreateNew }: VaultSearchProps) {
                         <div className="text-left">
                             <p className="font-medium">{item.subject}</p>
                             <p className="text-xs text-muted-foreground">
-                                {item.category} • {item.year || '?'} • {item.tag_brand || 'Unknown Tag'}
+                                {item.category} • {formatYearRange(item.year_start, item.year_end) || '?'} • {item.tag_brand || 'Unknown Tag'}
                             </p>
                         </div>
                     </div>

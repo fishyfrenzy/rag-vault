@@ -10,7 +10,8 @@ interface VaultItem {
     brand: string | null;
     title: string | null;
     category: string;
-    year: string | null;
+    year_start: number | null;
+    year_end: number | null;
     tag_brand: string | null;
     stitch_type: string | null;
     material: string | null;
@@ -28,6 +29,8 @@ interface VaultItem {
     parent_id: string | null;
     variant_type: string | null;
     slug: string | null;
+    estimated_value_low: number | null;
+    estimated_value_high: number | null;
 }
 
 // Helper to check if string is a valid UUID
@@ -39,7 +42,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     const supabase = await createClient();
 
     // Query by id if UUID, otherwise by slug
-    let query = supabase.from("the_vault").select("subject, category, year, tag_brand, description, reference_image_url, verification_count");
+    let query = supabase.from("the_vault").select("subject, category, year_start, year_end, tag_brand, description, reference_image_url, verification_count");
     if (isUUID(id)) {
         query = query.eq("id", id);
     } else {
@@ -53,7 +56,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
         };
     }
 
-    const yearText = item.year ? ` (${item.year})` : "";
+    const yearText = item.year_start ? ` (${item.year_end ? `${item.year_start}-${item.year_end}` : item.year_start})` : "";
     const tagText = item.tag_brand ? ` | ${item.tag_brand} Tag` : "";
     const verifiedText = item.verification_count >= 2 ? " ✓ Verified" : "";
 
@@ -69,7 +72,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
             "vintage shirt",
             "vintage t-shirt",
             item.category,
-            item.year,
+            item.year_start?.toString(),
             item.tag_brand,
             "authentication",
             "real or fake",

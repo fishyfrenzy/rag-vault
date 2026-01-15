@@ -50,7 +50,8 @@ export interface VaultItem {
     id: string;
     subject: string;
     category: Category;
-    year: string | null;
+    year_start: number | null;
+    year_end: number | null;
     tag_brand: string[] | null;
     stitch_type: "Single" | "Double" | "Mixed" | "Other" | null;
     material: string | null;
@@ -70,6 +71,8 @@ export interface VaultItem {
     created_by: string | null;
     created_at: string;
     updated_at: string;
+    estimated_value_low: number | null;
+    estimated_value_high: number | null;
 }
 
 export type Category =

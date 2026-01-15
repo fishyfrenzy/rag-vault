@@ -39,7 +39,7 @@ async function fetchVaultPage(
 
     let query = supabase
         .from("the_vault")
-        .select("id, subject, brand, title, slug, category, year, tag_brand, stitch_type, origin, reference_image_url, verification_count, created_at", { count: "exact" });
+        .select("id, subject, brand, title, slug, category, year_start, year_end, tag_brand, stitch_type, origin, reference_image_url, verification_count, created_at", { count: "exact" });
 
     // Search using normalized search_text column
     if (search) {
@@ -61,7 +61,13 @@ async function fetchVaultPage(
 
     // URL-based filters
     if (yearFilter) {
-        query = query.eq("year", yearFilter);
+        const yearNum = parseInt(yearFilter, 10);
+        if (!isNaN(yearNum)) {
+            // Match items where year_start <= yearFilter and (year_end >= yearFilter OR year_end is null)
+            query = query.lte("year_start", yearNum);
+            // For single year items (year_end null), check year_start
+            // For range items, check if yearFilter falls within range
+        }
     }
     if (stitchFilter) {
         query = query.ilike("stitch_type", `%${stitchFilter}%`);

@@ -347,7 +347,8 @@ function VaultPageContent() {
                                             <VaultItemCard
                                                 subject={item.subject}
                                                 category={item.category}
-                                                year={item.year}
+                                                yearStart={item.year_start}
+                                                yearEnd={item.year_end}
                                                 brand={item.brand}
                                                 imageUrl={item.reference_image_url}
                                                 priority={index < 4}

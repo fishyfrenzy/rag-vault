@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { cn, formatYearRange } from "@/lib/utils";
 import { useState, memo } from "react";
 import Image from "next/image";
 
@@ -30,7 +30,8 @@ const blurDataURL = `data:image/svg+xml;base64,${toBase64(shimmer(400, 500))}`;
 interface VaultItemCardProps {
     subject: string;
     category: string;
-    year?: string | null;
+    yearStart?: number | null;
+    yearEnd?: number | null;
     brand?: string | null;
     size?: string;
     price?: number | null;
@@ -44,7 +45,8 @@ interface VaultItemCardProps {
 export const VaultItemCard = memo(function VaultItemCard({
     subject,
     category,
-    year,
+    yearStart,
+    yearEnd,
     brand,
     size,
     price,
@@ -62,7 +64,7 @@ export const VaultItemCard = memo(function VaultItemCard({
         : subject;
 
     // Format year for display
-    const displayYear = year ? year.toString().split(',')[0] : null;
+    const displayYear = formatYearRange(yearStart ?? null, yearEnd ?? null);
 
     return (
         <div

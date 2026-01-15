@@ -10,7 +10,8 @@ export interface VaultItem {
     title: string | null;
     slug: string | null;
     category: string;
-    year: string | null;
+    year_start: number | null;
+    year_end: number | null;
     tag_brand: string | null;
     stitch_type: string | null;
     material: string | null;
@@ -27,6 +28,8 @@ export interface VaultItem {
     tags: string[] | null;
     parent_id: string | null;
     variant_type: string | null;
+    estimated_value_low: number | null;
+    estimated_value_high: number | null;
     is_verified?: boolean;
 }
 
@@ -37,7 +40,8 @@ export interface VaultItemSummary {
     title: string | null;
     slug: string | null;
     category: string;
-    year: string | null;
+    year_start: number | null;
+    year_end: number | null;
     tag_brand: string | null;
     reference_image_url: string | null;
     verification_count: number;

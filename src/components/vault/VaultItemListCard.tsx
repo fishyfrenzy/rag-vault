@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { cn, formatYearRange } from "@/lib/utils";
 import { CheckCircle, Calendar } from "lucide-react";
 import type { VaultItemSummary } from "@/types/vault";
 
@@ -15,6 +15,7 @@ export function VaultItemListCard({
     className
 }: VaultItemListCardProps) {
     const isVerified = item.verification_count >= 3;
+    const displayYear = formatYearRange(item.year_start, item.year_end);
 
     return (
         <div
@@ -61,10 +62,10 @@ export function VaultItemListCard({
                     <Badge variant="secondary" className="text-[10px] h-5 px-2">
                         {item.category}
                     </Badge>
-                    {item.year && (
+                    {displayYear && (
                         <span className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Calendar className="w-3 h-3" />
-                            {item.year}
+                            {displayYear}
                         </span>
                     )}
                     {item.tag_brand && (
