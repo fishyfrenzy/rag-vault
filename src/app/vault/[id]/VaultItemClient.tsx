@@ -271,7 +271,7 @@ export default function VaultItemClient({ initialItem }: VaultItemClientProps) {
                         <div className="flex flex-wrap gap-2">
                             {item.year_start && (
                                 <a
-                                    href={`/vault?year=${item.year_start}`}
+                                    href={`/vault?search=${formatYearRange(item.year_start, item.year_end)}`}
                                     className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border/50 hover:bg-secondary hover:border-primary/30 transition-colors cursor-pointer"
                                 >
                                     <Calendar className="w-4 h-4 text-primary" />
@@ -289,7 +289,7 @@ export default function VaultItemClient({ initialItem }: VaultItemClientProps) {
                             )}
                             {item.stitch_type && (
                                 <a
-                                    href={`/vault?stitch=${encodeURIComponent(item.stitch_type)}`}
+                                    href={`/vault?search=${encodeURIComponent(item.stitch_type + ' Stitch')}`}
                                     className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border/50 hover:bg-secondary hover:border-primary/30 transition-colors cursor-pointer"
                                 >
                                     <Link2 className="w-4 h-4 text-primary" />
@@ -314,7 +314,7 @@ export default function VaultItemClient({ initialItem }: VaultItemClientProps) {
                             )}
                             {item.origin && (
                                 <a
-                                    href={`/vault?origin=${encodeURIComponent(item.origin)}`}
+                                    href={`/vault?search=${encodeURIComponent(item.origin)}`}
                                     className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border/50 hover:bg-secondary hover:border-primary/30 transition-colors cursor-pointer"
                                 >
                                     <span className="text-sm font-medium">{getFlagEmoji(item.origin)} {item.origin}</span>
