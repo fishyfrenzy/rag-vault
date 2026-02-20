@@ -11,6 +11,9 @@ interface AnalysisResult {
     tag_brand: string | null;
     confidence: number;
     description: string;
+    cut_id: number | null;
+    era_id: number | null;
+    print_method_id: number | null;
 }
 
 interface VaultMatch {
@@ -92,21 +95,27 @@ export async function POST(request: Request) {
             );
         }
 
-        // Fetch existing vault items and tag guide for context
-        const [vaultResult, tagGuideResult] = await Promise.all([
+        // Fetch existing vault items, tag guide, and new taxonomy tables for context
+        const [vaultResult, tagGuideResult, cutsResult, erasResult, printMethodsResult] = await Promise.all([
             supabase
                 .from("the_vault")
                 .select("id, subject, category, year, tag_brand, reference_image_url")
                 .limit(200),
             supabase
                 .from("tag_guide")
-                .select("id, brand_name, variation_name, era_start, era_end, description, reference_image_url")
+                .select("id, brand_name, variation_name, era_start, era_end, description, reference_image_url"),
+            supabase.from("shirt_cuts").select("*"),
+            supabase.from("shirt_eras").select("*"),
+            supabase.from("print_methods").select("*")
         ]);
 
         const vaultItems = vaultResult.data || [];
         const tagGuide: TagGuideEntry[] = tagGuideResult.data || [];
+        const cuts = cutsResult.data || [];
+        const eras = erasResult.data || [];
+        const printMethods = printMethodsResult.data || [];
 
-        console.log(`Found ${vaultItems.length} vault items, ${tagGuide.length} tag guide entries`);
+        console.log(`Found ${vaultItems.length} vault items, ${tagGuide.length} tag guide entries, + Taxonomy`);
 
         const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
@@ -115,62 +124,63 @@ export async function POST(request: Request) {
         console.log("Fetching images...");
         const imageParts = await Promise.all(
             imageUrls.map(async (url: string, i: number) => {
-                console.log(`Fetching image ${i + 1}:`, url.substring(0, 50));
                 const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch image ${i + 1}: ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`Failed to fetch image ${i + 1}: ${response.status}`);
                 const buffer = await response.arrayBuffer();
                 const base64 = Buffer.from(buffer).toString("base64");
                 const mimeType = response.headers.get("content-type") || "image/jpeg";
-                return {
-                    inlineData: {
-                        data: base64,
-                        mimeType,
-                    },
-                };
+                return { inlineData: { data: base64, mimeType } };
             })
         );
         console.log("All images fetched successfully");
 
         // Build context strings for the prompt
-        const existingSubjects = vaultItems.map(item => item.subject).join(", ");
         const tagGuideContext = tagGuide.map(tag => {
-            const tagName = tag.variation_name
-                ? `${tag.brand_name} (${tag.variation_name})`
-                : tag.brand_name;
-            return `- ${tagName} [${tag.era_start}-${tag.era_end || 'present'}]: ${tag.description || 'No description'}`;
+            const tagName = tag.variation_name ? `${tag.brand_name} (${tag.variation_name})` : tag.brand_name;
+            return `- ${tagName} [${tag.era_start}-${tag.era_end || 'present'}]`;
         }).join("\n");
 
-        const prompt = `You are an expert vintage t-shirt appraiser and collector. Analyze these photos of a vintage t-shirt and extract the following information.
+        const cutsContext = cuts.map(c => `- ID: ${c.id} | ${c.name}: ${c.description || ''}`).join("\n");
+        const erasContext = eras.map(e => `- ID: ${e.id} | ${e.name} (${e.year_start}-${e.year_end || 'present'})`).join("\n");
+        const printsContext = printMethods.map(p => `- ID: ${p.id} | ${p.name}: ${p.description || ''}`).join("\n");
 
-IMPORTANT: Be highly specific and observant. To accurately date and appraise the shirt, you MUST look for:
-1.  **Stitching**: Check the hems (sleeves and bottom). Is it "single-stitch" (one visible line of thread) or "double-stitch"? Single-stitch strongly indicates pre-late 90s/early 2000s.
-2.  **Copyright Dates**: Zoom in on the main graphic. Look for tiny text usually at the bottom or near the edges of the artwork for a year (e.g., ©1992).
-3.  **Wear & Tear**: Note the level of fading on the fabric and cracking on the print. Genuine vintage often shows specific wear patterns.
-4.  **Tag Characteristics**: Evaluate the tag's material, font, and RN numbers if visible.
+        const prompt = `You are an expert vintage t-shirt appraiser and collector. Analyze these photos of a vintage t-shirt and extract strict structured information.
 
-## EXISTING DATABASE SUBJECTS
-The following subjects already exist in our database. If this shirt matches any of them, use the EXACT same subject name:
-${existingSubjects || "No existing items in database yet."}
+IMPORTANT: You MUST rely on the Front, Back, and Tag photos provided. Look for single-stitching, licensing dates, fading patterns, and exact tag brands.
+
+## TAXONOMY GUIDES - STRICT MATCHING REQUIRED
+You must match the visual characteristics of the shirt to the EXACT ID numbers from these lists:
+
+**Shirt Cuts / Stitching** (Look at hems):
+${cutsContext}
+
+**Style Eras**:
+${erasContext}
+
+**Print Methods**:
+${printsContext}
 
 ## TAG GUIDE - CRITICAL FOR DATING
-Use this guide to identify the tag/manufacturer brand. The date range indicates when this tag style was used - use this to estimate the shirt's year:
+You must follow this exact sequence for dating the shirt:
+1. FIRST, look at the photo of the tag. Identify the tag brand and compare it to this list:
 ${tagGuideContext || "No tag guide available."}
-
-**IMPORTANT**: If you identify a tag brand from the guide above, the shirt's year MUST fall within that tag's date range. For example, if you see a "Giant" tag (1988-1995), the year should be estimated between 1988-1995.
+2. SECOND, establish the 'era_start' and 'era_end' strictly based on the tag brand you identified.
+3. THIRD, look at the graphic photos (copyright dates, style, fading) to estimate the exact "year" - but it MUST fall within the tag's era boundary you established in step 2.
 
 ## RESPONSE FORMAT
-Respond ONLY with valid JSON in this exact format:
-  "subject": "The main subject/band/brand/artwork (e.g., 'Metallica', 'Harley-Davidson', 'Grateful Dead')",
+Respond ONLY with valid JSON in this exact format, using NULL if a field cannot be confidently determined:
+{
+  "subject": "The main subject/band/brand/artwork (e.g., 'Metallica', 'Harley-Davidson')",
   "category": "One of: Music, Motorcycle, Movie, Art, Sport, Advertising, Other",
-  "year": The estimated year as a number based on tag era, copyright date, and design style (e.g., 1991) or null if unknown,
-  "year_range_start": The earliest possible year based on tag dating or null,
-  "year_range_end": The latest possible year based on tag dating or null,
-  "tag_brand": "The tag/maker brand if visible (e.g., 'Giant', 'Hanes', 'Fruit of the Loom') or null",
-  "confidence": A number from 0-100 indicating your confidence in the identification,
-  "description": "A brief description of the shirt design, notable features, specifically mentioning if it is single-stitch, visible copyright dates, and the condition (fading/cracking) that informed your appraisal.",
-  "matched_existing_subject": true if the subject matches an existing database entry exactly, false otherwise
+  "year": Estimated year (number),
+  "year_range_start": Earliest possible year (number),
+  "year_range_end": Latest possible year (number),
+  "tag_brand": "The exact tag/maker brand if visible",
+  "confidence": A number from 0-100 indicating your confidence,
+  "description": "A brief explanation of why you chose these dates and attributes.",
+  "cut_id": (Number) The EXACT ID from the Shirt Cuts list above,
+  "era_id": (Number) The EXACT ID from the Style Eras list above,
+  "print_method_id": (Number) The EXACT ID from the Print Methods list above
 }
 
 Analyze the shirt in these images:`;

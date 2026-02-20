@@ -36,7 +36,8 @@ export function AddVariantModal({ parentItem, userId, onClose, onSuccess }: AddV
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const handleImageUploadComplete = async (vaultId: string, urls: string[]) => {
+    const handleImageUploadComplete = async (uploadData: { vaultItemId?: string; imageUrls: string[] }) => {
+        const urls = uploadData.imageUrls;
         if (urls.length === 0) {
             setError("Please upload an image");
             return;

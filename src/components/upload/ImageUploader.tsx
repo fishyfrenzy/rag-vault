@@ -129,7 +129,7 @@ export function ImageUploader({
                         <p className="font-semibold text-lg tracking-tight">Drop photos here or tap to upload</p>
                         <p className="text-sm text-muted-foreground">
                             {minImages > 1
-                                ? `Minimum ${minImages} photos (front & back required)`
+                                ? `Minimum ${minImages} photos (Front, Back, & Tag required)`
                                 : "Upload a photo"
                             }
                         </p>
@@ -175,6 +175,11 @@ export function ImageUploader({
                                 {index === 1 && (
                                     <span className="absolute bottom-2 left-2 text-[10px] uppercase tracking-wider font-semibold bg-black/70 backdrop-blur-md text-white px-2 py-1 rounded-md shadow-sm">
                                         Back
+                                    </span>
+                                )}
+                                {index === 2 && (
+                                    <span className="absolute bottom-2 left-2 text-[10px] uppercase tracking-wider font-semibold bg-black/70 backdrop-blur-md text-white px-2 py-1 rounded-md shadow-sm">
+                                        Tag
                                     </span>
                                 )}
                             </motion.div>

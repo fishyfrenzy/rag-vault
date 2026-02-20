@@ -34,8 +34,8 @@ export default function SellPage() {
 
     if (!user) return null;
 
-    const handleSmartUploadComplete = (vaultItemId: string, imageUrls: string[]) => {
-        setUploadedImageUrls(imageUrls);
+    const handleSmartUploadComplete = (data: { vaultItemId?: string; imageUrls: string[] }) => {
+        setUploadedImageUrls(data.imageUrls);
         setMode("manual"); // Go to manual form with images pre-filled
     };
 

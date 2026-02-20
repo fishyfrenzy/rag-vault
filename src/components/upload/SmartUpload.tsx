@@ -42,7 +42,18 @@ interface TagGuideMatch {
 
 interface SmartUploadProps {
     userId: string;
-    onComplete: (vaultItemId: string, imageUrls: string[]) => void;
+    onComplete: (data: {
+        vaultItemId?: string;
+        imageUrls: string[];
+        subject: string;
+        category: string;
+        year: string;
+        tagBrand: string;
+        cutId: number | "";
+        eraId: number | "";
+        printMethodId: number | "";
+        description?: string;
+    }) => void;
     onCancel: () => void;
     embedded?: boolean;
     minImages?: number;
@@ -51,7 +62,7 @@ interface SmartUploadProps {
 
 type Step = "upload" | "analyzing" | "matches" | "confirm" | "saving" | "error";
 
-export function SmartUpload({ userId, onComplete, onCancel, embedded = false, minImages = 2, maxImages = 8 }: SmartUploadProps) {
+export function SmartUpload({ userId, onComplete, onCancel, embedded = false, minImages = 3, maxImages = 8 }: SmartUploadProps) {
     const [step, setStep] = useState<Step>("upload");
     const [images, setImages] = useState<File[]>([]);
     const [imageUrls, setImageUrls] = useState<string[]>([]);
@@ -87,6 +98,11 @@ export function SmartUpload({ userId, onComplete, onCancel, embedded = false, mi
     const [category, setCategory] = useState("");
     const [year, setYear] = useState("");
     const [tagBrand, setTagBrand] = useState("");
+
+    // Taxonomy ID fields parsed from AI
+    const [cutId, setCutId] = useState<number | "">("");
+    const [eraId, setEraId] = useState<number | "">("");
+    const [printMethodId, setPrintMethodId] = useState<number | "">("");
 
     const handleImagesReady = (files: File[]) => {
         setImages(files);
@@ -129,7 +145,16 @@ export function SmartUpload({ userId, onComplete, onCancel, embedded = false, mi
 
             // If embedded, we skip analysis matching and just return the URLs to the parent
             if (embedded) {
-                onComplete("", urls);
+                onComplete({
+                    imageUrls: urls,
+                    subject: "",
+                    category: "",
+                    year: "",
+                    tagBrand: "",
+                    cutId: "",
+                    eraId: "",
+                    printMethodId: ""
+                });
                 return;
             }
 
@@ -157,6 +182,9 @@ export function SmartUpload({ userId, onComplete, onCancel, embedded = false, mi
             setCategory(result.category);
             setYear(result.year?.toString() || "");
             setTagBrand(result.tag_brand || "");
+            setCutId(result.cut_id || "");
+            setEraId(result.era_id || "");
+            setPrintMethodId(result.print_method_id || "");
 
             // If we have potential matches, show match selection step
             if (matches && matches.length > 0) {
@@ -232,7 +260,18 @@ export function SmartUpload({ userId, onComplete, onCancel, embedded = false, mi
                 }
             }
 
-            onComplete(vaultItemId, imageUrls);
+            onComplete({
+                vaultItemId,
+                imageUrls,
+                subject,
+                category,
+                year,
+                tagBrand,
+                cutId,
+                eraId,
+                printMethodId,
+                description: analysis?.description
+            });
         } catch (err) {
             console.error(err);
             setError(err instanceof Error ? err.message : "Failed to save");

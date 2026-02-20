@@ -83,7 +83,8 @@ export function EditProposalModal({
         onSuccess();
     };
 
-    const handleImageUploadComplete = (vaultId: string, urls: string[]) => {
+    const handleImageUploadComplete = (data: { vaultItemId?: string; imageUrls: string[] }) => {
+        const urls = data.imageUrls;
         if (urls.length > 0) {
             setNewValue(urls[0]);
             setShowImageUpload(false);
