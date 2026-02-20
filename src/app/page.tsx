@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ActivityTicker } from "@/components/activity/ActivityTicker";
 import { HomeAuthButton } from "@/components/home/HomeAuthButton";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase/client"; // Note: In server components we often use createClient from utils, but for public read accessible tables client is often fine or we use fetch. 
+import Image from "next/image";
 // Actually, standard pattern often involves checking if it's a server component. 
 // However, since we are just doing a public read, we can use a direct fetch or the supabase client if configured for server (or just client side fetch if we converted to "use client", but I said I'd keep it server).
 // Let's use the standard server-side fetching pattern if possible, or just standard fetching. 
@@ -21,28 +21,29 @@ import { createClient } from "@/lib/supabase/server";
 export const revalidate = 60; // Revalidate every 60 seconds
 
 export default async function Home() {
-  const supabase = await createClient(); // Await if createClient is async, but checking server.ts standard pattern usually it's sync or async. 
-  // Wait, in previous step 1138 summary, it says "createClient function for server-side Supabase interactions".
-  // Let's assume it might return a Promise safely or just await it to be sure if using the latest Next.js helpers.
-  // Actually, checked standard Next.js supabase auth helpers, createServerClient often needs cookies() which is async in newer Next.js.
-  // If lint says "Property 'from' does not exist on type 'Promise...'", then `createClient()` returns a Promise. So I MUST await it.
+  const supabase = await createClient();
 
-  // Fetch fresh items
-  const { data: freshItems } = await supabase
-    .from('the_vault')
-    .select('id, subject, slug, category, reference_image_url, year')
-    .order('created_at', { ascending: false })
-    .limit(8);
-
-  // Fetch featured article (Find of the Week)
-  const { data: featuredArticle } = await supabase
-    .from('articles')
-    .select('id, slug, title, subtitle, hero_image_url')
-    .eq('status', 'published')
-    .eq('article_type', 'find_of_the_week')
-    .order('published_at', { ascending: false })
-    .limit(1)
-    .single();
+  // Fetch all data in parallel to avoid waterfalls
+  const [
+    { data: freshItems },
+    { data: featuredArticle }
+  ] = await Promise.all([
+    // Fetch fresh items
+    supabase
+      .from('the_vault')
+      .select('id, subject, slug, category, reference_image_url, year')
+      .order('created_at', { ascending: false })
+      .limit(8),
+    // Fetch featured article (Find of the Week)
+    supabase
+      .from('articles')
+      .select('id, slug, title, subtitle, hero_image_url')
+      .eq('status', 'published')
+      .eq('article_type', 'find_of_the_week')
+      .order('published_at', { ascending: false })
+      .limit(1)
+      .single()
+  ]);
 
 
   return (
@@ -52,7 +53,14 @@ export default async function Home() {
 
         {/* Background Textures/Image */}
         <div className="absolute inset-0 z-0">
-          <img src="/hero-shirts.jpg" alt="Background" className="object-cover w-full h-full opacity-60 blur-[2px] brightness-40" />
+          <Image
+            src="/hero-shirts.jpg"
+            alt="Background gradient of vintage shirts"
+            fill
+            priority
+            className="object-cover opacity-60 blur-[2px] brightness-40"
+            sizes="100vw"
+          />
           <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/40 to-background" />
         </div>
 
@@ -99,12 +107,15 @@ export default async function Home() {
         {/* Featured Article */}
         {featuredArticle ? (
           <a href={`/articles/${featuredArticle.slug}`} className="block group">
-            <div className="relative aspect-[4/5] md:aspect-[21/9] rounded-2xl overflow-hidden bg-secondary">
+            <div className="relative aspect-[4/5] md:aspect-[21/9] rounded-2xl overflow-hidden bg-secondary border border-border/50">
               {featuredArticle.hero_image_url && (
-                <img
+                <Image
                   src={featuredArticle.hero_image_url}
-                  alt={featuredArticle.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  alt={featuredArticle.title || "Featured Article"}
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                  sizes="(max-width: 768px) 100vw, 1280px"
+                  priority
                 />
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -134,10 +145,12 @@ export default async function Home() {
               <div className="space-y-2 group cursor-pointer">
                 <div className="aspect-square bg-secondary rounded-xl overflow-hidden border border-border/50 relative">
                   {item.reference_image_url ? (
-                    <img
+                    <Image
                       src={item.reference_image_url}
-                      alt={item.subject}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      alt={item.subject || "Vault item"}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-4xl bg-secondary/50">
