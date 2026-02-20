@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { TagInput } from "@/components/ui/TagInput";
 import { ChevronDown, ChevronUp, GitBranch, X, Search } from "lucide-react";
 import { ImageUploader } from "@/components/upload/ImageUploader";
+import type { ShirtCut, ShirtEra, PrintMethod } from "@/types/vault";
 
 interface MatchedItem {
     id: string;
@@ -71,11 +72,19 @@ export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }:
     const [years, setYears] = useState<string[]>([]);
     const [imageFile, setImageFile] = useState<File | null>(null);
 
-    // Garment Details (Optional)
-    const [garmentType, setGarmentType] = useState("t-shirt");
-    const [stitchType, setStitchType] = useState("Single");
+    // Garment Details (Relational Taxonomy)
+    const [cutId, setCutId] = useState<number | "">("");
+    const [eraId, setEraId] = useState<number | "">("");
+    const [printMethodId, setPrintMethodId] = useState<number | "">("");
+
+    // Legacy fields (kept for backward compatibility or UI transitional states if needed, but we'll try to primarily use relations)
     const [origin, setOrigin] = useState("");
     const [tagBrands, setTagBrands] = useState<string[]>([]);
+
+    // Taxonomy Options State
+    const [cuts, setCuts] = useState<ShirtCut[]>([]);
+    const [eras, setEras] = useState<ShirtEra[]>([]);
+    const [printMethods, setPrintMethods] = useState<PrintMethod[]>([]);
 
     // Tags
     const [tags, setTags] = useState<string[]>([]);
@@ -91,6 +100,26 @@ export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }:
     const [variantType, setVariantType] = useState("");
 
     const [loading, setLoading] = useState(false);
+
+    // Fetch taxonomy lists on mount
+    useEffect(() => {
+        async function fetchTaxonomy() {
+            try {
+                const [cutRes, eraRes, printRes] = await Promise.all([
+                    supabase.from("shirt_cuts").select("*").order("name"),
+                    supabase.from("shirt_eras").select("*").order("year_start"),
+                    supabase.from("print_methods").select("*").order("name"),
+                ]);
+
+                if (cutRes.data) setCuts(cutRes.data);
+                if (eraRes.data) setEras(eraRes.data);
+                if (printRes.data) setPrintMethods(printRes.data);
+            } catch (err) {
+                console.error("Failed to load taxonomy lists", err);
+            }
+        }
+        fetchTaxonomy();
+    }, []);
 
     // Debounced search for matching items
     useEffect(() => {
@@ -178,9 +207,13 @@ export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }:
                     year: years.length > 0 ? years.join(', ') : null,
                     tag_brand: tagBrands.length > 0 ? tagBrands : null,
                     tags: tags.length > 0 ? tags : null,
-                    stitch_type: stitchType || null,
+                    cut_id: cutId ? Number(cutId) : null,
+                    era_id: eraId ? Number(eraId) : null,
+                    print_method_id: printMethodId ? Number(printMethodId) : null,
+                    // Legacy flat fields mapping (can be removed once UI officially deprecates them)
+                    // stitch_type: cutId ? cuts.find(c => c.id === cutId)?.name : null, 
+                    // body_type: cutId ? cuts.find(c => c.id === cutId)?.name : null,
                     origin: origin || null,
-                    body_type: garmentType || null,
                     created_by: userId || null,
                     description: description || null,
                     reference_image_url: referenceImageUrl,
@@ -392,36 +425,51 @@ export function CreateVaultItem({ initialSubject, onSuccess, onCancel, userId }:
                     </div>
                 </CollapsibleSection>
 
-                {/* Garment Details - Optional */}
+                {/* Garment Details - Standardized Taxonomy */}
                 <CollapsibleSection title="Garment Details">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <FormLabel>Garment Type</FormLabel>
+                            <FormLabel>Shirt Cut / Body Type</FormLabel>
                             <select
                                 className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                value={garmentType}
-                                onChange={(e) => setGarmentType(e.target.value)}
+                                value={cutId}
+                                onChange={(e) => setCutId(e.target.value === "" ? "" : Number(e.target.value))}
                             >
-                                {['t-shirt', 'long-sleeve', 'cutoff', 'jacket', 'hoodie', 'sweater', 'raglan', 'other'].map(t => (
-                                    <option key={t} value={t} className="bg-background capitalize">{t}</option>
+                                <option value="">Unknown / Select Cut</option>
+                                {cuts.map(c => (
+                                    <option key={c.id} value={c.id} className="bg-background">{c.name}</option>
                                 ))}
                             </select>
                         </div>
                         <div className="space-y-2">
-                            <FormLabel>Stitch Type</FormLabel>
+                            <FormLabel>Style Era (Fallback)</FormLabel>
                             <select
                                 className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                value={stitchType}
-                                onChange={(e) => setStitchType(e.target.value)}
+                                value={eraId}
+                                onChange={(e) => setEraId(e.target.value === "" ? "" : Number(e.target.value))}
                             >
-                                {['Single', 'Double', 'Mixed', 'Other'].map(s => (
-                                    <option key={s} value={s} className="bg-background">{s}</option>
+                                <option value="">Unknown / Select Era</option>
+                                {eras.map(e => (
+                                    <option key={e.id} value={e.id} className="bg-background">{e.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="space-y-2 col-span-2">
+                            <FormLabel>Print Method</FormLabel>
+                            <select
+                                className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                value={printMethodId}
+                                onChange={(e) => setPrintMethodId(e.target.value === "" ? "" : Number(e.target.value))}
+                            >
+                                <option value="">Unknown / Select Print Method</option>
+                                {printMethods.map(p => (
+                                    <option key={p.id} value={p.id} className="bg-background">{p.name}</option>
                                 ))}
                             </select>
                         </div>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2 pt-2">
                         <FormLabel>Made In</FormLabel>
                         <Input
                             value={origin}

@@ -287,7 +287,16 @@ export default function VaultItemClient({ initialItem }: VaultItemClientProps) {
                                     <span className="text-sm font-medium">{item.tag_brand}</span>
                                 </a>
                             )}
-                            {item.stitch_type && (
+                            {item.cut && (
+                                <a
+                                    href={`/vault?cut=${encodeURIComponent(item.cut.slug)}`}
+                                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border/50 hover:bg-secondary hover:border-primary/30 transition-colors cursor-pointer"
+                                >
+                                    <Link2 className="w-4 h-4 text-primary" />
+                                    <span className="text-sm font-medium">{item.cut.name}</span>
+                                </a>
+                            )}
+                            {item.stitch_type && !item.cut && (
                                 <a
                                     href={`/vault?search=${encodeURIComponent(item.stitch_type + ' Stitch')}`}
                                     className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border/50 hover:bg-secondary hover:border-primary/30 transition-colors cursor-pointer"
@@ -296,7 +305,15 @@ export default function VaultItemClient({ initialItem }: VaultItemClientProps) {
                                     <span className="text-sm font-medium">{item.stitch_type} Stitch</span>
                                 </a>
                             )}
-                            {item.material && (
+                            {item.print_method && (
+                                <a
+                                    href={`/vault?print_method=${encodeURIComponent(item.print_method.slug)}`}
+                                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border/50 hover:bg-secondary hover:border-primary/30 transition-colors cursor-pointer"
+                                >
+                                    <span className="text-sm font-medium">🎨 {item.print_method.name}</span>
+                                </a>
+                            )}
+                            {item.material && !item.print_method && (
                                 <a
                                     href={`/vault?search=${encodeURIComponent(item.material)}`}
                                     className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border/50 hover:bg-secondary hover:border-primary/30 transition-colors cursor-pointer"

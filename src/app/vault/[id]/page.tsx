@@ -105,7 +105,7 @@ export default async function VaultItemPage({ params }: { params: Promise<{ id: 
     const supabase = await createClient();
 
     // Fetch item by ID if UUID, otherwise by slug
-    let query = supabase.from("the_vault").select("*");
+    let query = supabase.from("the_vault").select("*, cut:shirt_cuts(*), era:shirt_eras(*), print_method:print_methods(*)");
     if (isUUID(id)) {
         query = query.eq("id", id);
     } else {
