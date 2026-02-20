@@ -4,7 +4,9 @@ import { useState } from "react";
 import { ImageUploader } from "@/components/upload/ImageUploader";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase/client";
-import { Loader2, Check, AlertCircle, Sparkles, Link2, ChevronRight } from "lucide-react";
+import { Loader2, Check, AlertCircle, Sparkles, Link2, ChevronRight, Upload as UploadIcon } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useEffect } from "react";
 
 interface AnalysisResult {
     subject: string;
@@ -58,6 +60,27 @@ export function SmartUpload({ userId, onComplete, onCancel, embedded = false, mi
     const [tagGuideMatch, setTagGuideMatch] = useState<TagGuideMatch | null>(null);
     const [selectedMatch, setSelectedMatch] = useState<VaultMatch | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [loadingText, setLoadingText] = useState("Preparing images...");
+
+    const loadingSequence = [
+        "Analyzing stitching and hems...",
+        "Scanning for hidden copyrights...",
+        "Identifying artwork motifs...",
+        "Cross-referencing tag database...",
+        "Consulting the archives...",
+        "Finalizing estimates..."
+    ];
+
+    useEffect(() => {
+        if (step === "analyzing") {
+            let index = 0;
+            const interval = setInterval(() => {
+                index = (index + 1) % loadingSequence.length;
+                setLoadingText(loadingSequence[index]);
+            }, 3000);
+            return () => clearInterval(interval);
+        }
+    }, [step]);
 
     // Editable fields for user correction
     const [subject, setSubject] = useState("");
@@ -217,259 +240,298 @@ export function SmartUpload({ userId, onComplete, onCancel, embedded = false, mi
         }
     };
 
+    const slideVariants = {
+        initial: { opacity: 0, y: 20 },
+        animate: { opacity: 1, y: 0 },
+        exit: { opacity: 0, y: -20 }
+    };
+
     return (
         <div className={embedded ? "space-y-4" : "space-y-6"}>
-            {step === "upload" && (
-                <>
-                    <div className="space-y-2">
-                        {!embedded && (
-                            <div className="flex items-center gap-2">
-                                <Sparkles className="w-5 h-5 text-primary" />
-                                <h2 className="text-xl font-bold">Smart Upload</h2>
-                            </div>
-                        )}
-                        {!embedded && (
-                            <p className="text-sm text-muted-foreground">
-                                Upload photos and AI will identify your shirt automatically.
-                            </p>
-                        )}
-                    </div>
-
-                    <ImageUploader
-                        onImagesReady={handleImagesReady}
-                        minImages={minImages}
-                        maxImages={maxImages}
-                    />
-
-                    <div className="flex gap-4">
-                        <Button variant="ghost" className="flex-1" onClick={onCancel}>
-                            Cancel
-                        </Button>
-                        <Button
-                            className="flex-1"
-                            onClick={analyzeImages}
-                            disabled={images.length < minImages}
-                        >
-                            {embedded ? (
-                                <>
-                                    <Check className="w-4 h-4 mr-2" />
-                                    Use This Image
-                                </>
-                            ) : (
-                                <>
-                                    <Sparkles className="w-4 h-4 mr-2" />
-                                    Analyze Photos
-                                </>
-                            )}
-                        </Button>
-                    </div>
-                </>
-            )}
-
-            {step === "analyzing" && (
-                <div className="py-12 text-center space-y-4">
-                    <Loader2 className="w-12 h-12 mx-auto animate-spin text-primary" />
-                    <div>
-                        <p className="font-medium">Analyzing your shirt...</p>
-                        <p className="text-sm text-muted-foreground">
-                            AI is scanning database and identifying details
-                        </p>
-                    </div>
-                </div>
-            )}
-
-            {step === "matches" && potentialMatches.length > 0 && (
-                <div className="space-y-6">
-                    <div className="flex items-center gap-2 text-amber-500">
-                        <Link2 className="w-5 h-5" />
-                        <span className="font-medium">
-                            {potentialMatches.length} potential match{potentialMatches.length > 1 ? 'es' : ''} found
-                        </span>
-                    </div>
-
-                    <div className="p-4 bg-secondary/30 rounded-lg space-y-1">
-                        <p className="text-sm text-muted-foreground">AI identified:</p>
-                        <p className="text-lg font-bold">{analysis?.subject}</p>
-                        <p className="text-sm">{analysis?.description}</p>
-                    </div>
-
-                    <div className="space-y-3">
-                        <p className="text-sm font-medium">Is this one of these existing items?</p>
-
-                        {potentialMatches.map((match) => (
-                            <button
-                                key={match.id}
-                                onClick={() => handleSelectMatch(match)}
-                                className="w-full flex items-center gap-4 p-4 rounded-lg border border-border hover:border-primary hover:bg-primary/5 transition-colors text-left"
-                            >
-                                {match.reference_image_url && (
-                                    <img
-                                        src={match.reference_image_url}
-                                        alt={match.subject}
-                                        className="w-16 h-16 object-cover rounded-md"
-                                    />
-                                )}
-                                <div className="flex-1">
-                                    <p className="font-medium">{match.subject}</p>
-                                    <p className="text-sm text-muted-foreground">
-                                        {match.category} {match.year && `• ${match.year}`} {match.tag_brand && `• ${match.tag_brand}`}
-                                    </p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs px-2 py-1 rounded-full bg-primary/20 text-primary">
-                                        {match.similarity}% match
-                                    </span>
-                                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                                </div>
-                            </button>
-                        ))}
-                    </div>
-
-                    <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={handleCreateNew}
-                    >
-                        None of these - Create new item
-                    </Button>
-                </div>
-            )}
-
-            {step === "confirm" && analysis && (
-                <div className="space-y-6">
-                    <div className="flex items-center gap-2 text-green-500">
-                        <Check className="w-5 h-5" />
-                        <span className="font-medium">
-                            {selectedMatch ? "Using existing item" : `${analysis.confidence}% confident match`}
-                        </span>
-                    </div>
-
-                    <div className="p-4 bg-secondary/30 rounded-lg space-y-2">
-                        <p className="text-sm text-muted-foreground">
-                            {selectedMatch ? "Selected from database:" : "AI identified:"}
-                        </p>
-                        <p className="text-lg font-bold">{subject}</p>
-                        <p className="text-sm">{analysis.description}</p>
-                        {tagGuideMatch && (
-                            <div className="mt-3 p-3 bg-primary/10 rounded-md border border-primary/20">
-                                <div className="flex items-start gap-3">
-                                    {tagGuideMatch.reference_image_url && (
-                                        <img
-                                            src={tagGuideMatch.reference_image_url}
-                                            alt={`${tagGuideMatch.brand_name} tag`}
-                                            className="w-16 h-16 object-cover rounded border border-primary/30"
-                                        />
-                                    )}
-                                    <div className="flex-1">
-                                        <p className="text-sm font-medium text-primary">
-                                            🏷️ {tagGuideMatch.brand_name}
-                                            {tagGuideMatch.variation_name && (
-                                                <span className="text-xs ml-1 opacity-80">({tagGuideMatch.variation_name})</span>
-                                            )}
-                                        </p>
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                            Era: {tagGuideMatch.era_start} - {tagGuideMatch.era_end || 'present'}
-                                        </p>
-                                        {analysis.year_range_start && analysis.year_range_end && (
-                                            <p className="text-xs text-green-500 mt-1">
-                                                ✓ Shirt dated: {analysis.year_range_start}-{analysis.year_range_end}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="space-y-4">
-                        <p className="text-sm font-medium">
-                            {selectedMatch ? "Confirm details:" : "Confirm or edit details:"}
-                        </p>
-
+            <AnimatePresence mode="wait">
+                {step === "upload" && (
+                    <motion.div key="upload" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="space-y-6">
                         <div className="space-y-2">
-                            <label className="text-sm text-muted-foreground">Subject</label>
-                            <input
-                                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
-                                value={subject}
-                                onChange={(e) => setSubject(e.target.value)}
-                                disabled={!!selectedMatch}
-                            />
+                            {!embedded && (
+                                <div className="flex items-center gap-2">
+                                    <div className="p-2 bg-primary/10 rounded-lg">
+                                        <Sparkles className="w-5 h-5 text-primary" />
+                                    </div>
+                                    <h2 className="text-2xl font-bold tracking-tight">Smart Upload</h2>
+                                </div>
+                            )}
+                            {!embedded && (
+                                <p className="text-sm text-muted-foreground">
+                                    Upload photos and let our AI appraise and catalog your piece.
+                                </p>
+                            )}
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm text-muted-foreground">Category</label>
-                                <select
-                                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
-                                    value={category}
-                                    onChange={(e) => setCategory(e.target.value)}
-                                    disabled={!!selectedMatch}
+                        <ImageUploader
+                            onImagesReady={handleImagesReady}
+                            minImages={minImages}
+                            maxImages={maxImages}
+                        />
+
+                        <div className="flex gap-4">
+                            <Button variant="ghost" className="flex-1 rounded-full" onClick={onCancel}>
+                                Cancel
+                            </Button>
+                            <Button
+                                className="flex-1 rounded-full shadow-md"
+                                onClick={analyzeImages}
+                                disabled={images.length < minImages}
+                            >
+                                {embedded ? (
+                                    <>
+                                        <Check className="w-4 h-4 mr-2" />
+                                        Use This Image
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles className="w-4 h-4 mr-2" />
+                                        Analyze Details
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </motion.div>
+                )}
+
+                {step === "analyzing" && (
+                    <motion.div key="analyzing" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="py-16 text-center space-y-6">
+                        <div className="relative w-20 h-20 mx-auto">
+                            <div className="absolute inset-0 border-4 border-primary/20 rounded-full animate-pulse" />
+                            <Loader2 className="w-20 h-20 animate-spin text-primary absolute inset-0" />
+                            <Sparkles className="w-6 h-6 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                        </div>
+                        <div className="space-y-2">
+                            <p className="text-lg font-semibold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Appraising...</p>
+                            <AnimatePresence mode="wait">
+                                <motion.p
+                                    key={loadingText}
+                                    initial={{ opacity: 0, y: 5 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -5 }}
+                                    className="text-sm text-muted-foreground font-medium"
                                 >
-                                    {["Music", "Motorcycle", "Movie", "Art", "Sport", "Advertising", "Other"].map(
-                                        (c) => (
-                                            <option key={c} value={c} className="bg-background">
-                                                {c}
-                                            </option>
-                                        )
-                                    )}
-                                </select>
-                            </div>
+                                    {loadingText}
+                                </motion.p>
+                            </AnimatePresence>
+                        </div>
+                    </motion.div>
+                )}
+
+                {step === "matches" && potentialMatches.length > 0 && (
+                    <motion.div key="matches" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="space-y-6">
+                        <div className="flex items-center gap-2 text-primary">
+                            <Link2 className="w-5 h-5" />
+                            <span className="font-semibold tracking-tight">
+                                {potentialMatches.length} Similar Item{potentialMatches.length > 1 ? 's' : ''} Found
+                            </span>
+                        </div>
+
+                        <div className="p-5 bg-card border border-border/50 shadow-sm rounded-xl space-y-2">
+                            <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">AI Appraisal:</p>
+                            <p className="text-xl font-bold">{analysis?.subject}</p>
+                            <p className="text-sm text-muted-foreground leading-relaxed">{analysis?.description}</p>
+                        </div>
+
+                        <div className="space-y-3">
+                            <p className="text-sm font-medium text-muted-foreground px-1">Is this one of these existing items?</p>
+
                             <div className="space-y-2">
-                                <label className="text-sm text-muted-foreground">Year</label>
+                                {potentialMatches.map((match) => (
+                                    <motion.button
+                                        whileHover={{ scale: 1.01 }}
+                                        whileTap={{ scale: 0.99 }}
+                                        key={match.id}
+                                        onClick={() => handleSelectMatch(match)}
+                                        className="w-full flex items-center gap-4 p-4 rounded-xl border border-border bg-card shadow-sm hover:border-primary/50 hover:shadow-md transition-all text-left"
+                                    >
+                                        {match.reference_image_url ? (
+                                            <img
+                                                src={match.reference_image_url}
+                                                alt={match.subject}
+                                                className="w-14 h-14 object-cover rounded-lg shadow-sm"
+                                            />
+                                        ) : (
+                                            <div className="w-14 h-14 rounded-lg bg-secondary flex items-center justify-center">
+                                                <UploadIcon className="w-6 h-6 text-muted-foreground/50" />
+                                            </div>
+                                        )}
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-semibold truncate">{match.subject}</p>
+                                            <div className="flex flex-wrap gap-1.5 mt-1">
+                                                {match.category && <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 bg-secondary text-secondary-foreground rounded-full">{match.category}</span>}
+                                                {match.year && <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 bg-secondary text-secondary-foreground rounded-full">{match.year}</span>}
+                                                {match.tag_brand && <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 bg-secondary text-secondary-foreground rounded-full">{match.tag_brand}</span>}
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col items-end gap-1">
+                                            <span className="text-xs font-semibold px-2 py-1 rounded-md bg-primary/10 text-primary">
+                                                {match.similarity}% Match
+                                            </span>
+                                            <ChevronRight className="w-4 h-4 text-muted-foreground opacity-50" />
+                                        </div>
+                                    </motion.button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <Button
+                            variant="outline"
+                            className="w-full rounded-full h-12"
+                            onClick={handleCreateNew}
+                        >
+                            None of these - Add New Item
+                        </Button>
+                    </motion.div>
+                )}
+
+                {step === "confirm" && analysis && (
+                    <motion.div key="confirm" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="space-y-6">
+                        <div className="flex items-center gap-2 text-primary">
+                            <Check className="w-5 h-5" />
+                            <span className="font-semibold tracking-tight">
+                                {selectedMatch ? "Using existing item" : `${analysis.confidence}% Confident Match`}
+                            </span>
+                        </div>
+
+                        <div className="p-5 bg-card border border-border/50 shadow-sm rounded-xl space-y-3">
+                            <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">
+                                {selectedMatch ? "Selected from vault:" : "AI Details:"}
+                            </p>
+                            <p className="text-xl font-bold">{subject}</p>
+                            <p className="text-sm text-muted-foreground leading-relaxed">{analysis.description}</p>
+                            {tagGuideMatch && (
+                                <div className="mt-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
+                                    <div className="flex items-start gap-4">
+                                        {tagGuideMatch.reference_image_url ? (
+                                            <img
+                                                src={tagGuideMatch.reference_image_url}
+                                                alt={`${tagGuideMatch.brand_name} tag`}
+                                                className="w-12 h-12 object-cover rounded shadow-sm border border-border"
+                                            />
+                                        ) : (
+                                            <div className="w-12 h-12 rounded bg-background flex items-center justify-center border border-border">
+                                                <span className="text-xl">🏷️</span>
+                                            </div>
+                                        )}
+                                        <div className="flex-1">
+                                            <p className="font-semibold flex items-center gap-1.5">
+                                                {tagGuideMatch.brand_name}
+                                                {tagGuideMatch.variation_name && (
+                                                    <span className="text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary font-bold uppercase tracking-wider">{tagGuideMatch.variation_name}</span>
+                                                )}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground mt-1 font-medium">
+                                                Era Reference: {tagGuideMatch.era_start} - {tagGuideMatch.era_end || 'present'}
+                                            </p>
+                                            {analysis.year_range_start && analysis.year_range_end && (
+                                                <p className="text-xs text-primary mt-1.5 font-semibold flex items-center gap-1">
+                                                    <Check className="w-3 h-3" />
+                                                    Dated to: {analysis.year_range_start}-{analysis.year_range_end}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="space-y-4">
+                            <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                                {selectedMatch ? "Confirm metadata:" : "Verify & Edit details:"}
+                            </p>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-muted-foreground ml-1">Subject</label>
                                 <input
-                                    type="number"
-                                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
-                                    value={year}
-                                    onChange={(e) => setYear(e.target.value)}
-                                    placeholder="1991"
+                                    className="flex h-11 w-full rounded-xl border border-input bg-card px-4 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
+                                    value={subject}
+                                    onChange={(e) => setSubject(e.target.value)}
+                                    disabled={!!selectedMatch}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-semibold text-muted-foreground ml-1">Category</label>
+                                    <select
+                                        className="flex h-11 w-full rounded-xl border border-input bg-card px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
+                                        value={category}
+                                        onChange={(e) => setCategory(e.target.value)}
+                                        disabled={!!selectedMatch}
+                                    >
+                                        {["Music", "Motorcycle", "Movie", "Art", "Sport", "Advertising", "Other"].map(
+                                            (c) => (
+                                                <option key={c} value={c}>
+                                                    {c}
+                                                </option>
+                                            )
+                                        )}
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-semibold text-muted-foreground ml-1">Year</label>
+                                    <input
+                                        type="number"
+                                        className="flex h-11 w-full rounded-xl border border-input bg-card px-4 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
+                                        value={year}
+                                        onChange={(e) => setYear(e.target.value)}
+                                        placeholder="e.g. 1991"
+                                        disabled={!!selectedMatch}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-muted-foreground ml-1">Tag Brand</label>
+                                <input
+                                    className="flex h-11 w-full rounded-xl border border-input bg-card px-4 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
+                                    value={tagBrand}
+                                    onChange={(e) => setTagBrand(e.target.value)}
+                                    placeholder="Giant, Hanes, etc."
                                     disabled={!!selectedMatch}
                                 />
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm text-muted-foreground">Tag Brand</label>
-                            <input
-                                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
-                                value={tagBrand}
-                                onChange={(e) => setTagBrand(e.target.value)}
-                                placeholder="Giant, Hanes, etc."
-                                disabled={!!selectedMatch}
-                            />
+                        <div className="flex gap-4 pt-2">
+                            <Button variant="ghost" className="flex-1 rounded-full h-12" onClick={onCancel}>
+                                Cancel
+                            </Button>
+                            <Button className="flex-1 rounded-full h-12 shadow-md" onClick={saveToVault}>
+                                <Check className="w-5 h-5 mr-2" />
+                                Confirm &amp; Proceed
+                            </Button>
                         </div>
-                    </div>
+                    </motion.div>
+                )}
 
-                    <div className="flex gap-4">
-                        <Button variant="ghost" className="flex-1" onClick={onCancel}>
-                            Cancel
+                {step === "saving" && (
+                    <motion.div key="saving" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="py-16 text-center space-y-4">
+                        <Loader2 className="w-12 h-12 mx-auto animate-spin text-primary" />
+                        <p className="font-semibold text-lg tracking-tight">Archiving to Vault...</p>
+                    </motion.div>
+                )}
+
+                {step === "error" && (
+                    <motion.div key="error" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="py-12 text-center space-y-5">
+                        <div className="w-16 h-16 mx-auto bg-destructive/10 rounded-full flex items-center justify-center">
+                            <AlertCircle className="w-8 h-8 text-destructive" />
+                        </div>
+                        <div>
+                            <p className="font-bold text-lg">Appraisal Failed</p>
+                            <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">{error}</p>
+                        </div>
+                        <Button variant="outline" onClick={() => setStep("upload")} className="rounded-full">
+                            Try Again
                         </Button>
-                        <Button className="flex-1" onClick={saveToVault}>
-                            <Check className="w-4 h-4 mr-2" />
-                            Confirm &amp; Continue
-                        </Button>
-                    </div>
-                </div>
-            )}
-
-            {step === "saving" && (
-                <div className="py-12 text-center space-y-4">
-                    <Loader2 className="w-12 h-12 mx-auto animate-spin text-primary" />
-                    <p className="font-medium">Saving to vault...</p>
-                </div>
-            )}
-
-            {step === "error" && (
-                <div className="py-8 text-center space-y-4">
-                    <AlertCircle className="w-12 h-12 mx-auto text-destructive" />
-                    <div>
-                        <p className="font-medium">Something went wrong</p>
-                        <p className="text-sm text-muted-foreground">{error}</p>
-                    </div>
-                    <Button variant="outline" onClick={() => setStep("upload")}>
-                        Try Again
-                    </Button>
-                </div>
-            )}
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

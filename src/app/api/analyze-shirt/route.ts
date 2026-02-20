@@ -144,7 +144,11 @@ export async function POST(request: Request) {
 
         const prompt = `You are an expert vintage t-shirt appraiser and collector. Analyze these photos of a vintage t-shirt and extract the following information.
 
-IMPORTANT: Be specific and accurate. If you cannot determine something with confidence, use null.
+IMPORTANT: Be highly specific and observant. To accurately date and appraise the shirt, you MUST look for:
+1.  **Stitching**: Check the hems (sleeves and bottom). Is it "single-stitch" (one visible line of thread) or "double-stitch"? Single-stitch strongly indicates pre-late 90s/early 2000s.
+2.  **Copyright Dates**: Zoom in on the main graphic. Look for tiny text usually at the bottom or near the edges of the artwork for a year (e.g., ©1992).
+3.  **Wear & Tear**: Note the level of fading on the fabric and cracking on the print. Genuine vintage often shows specific wear patterns.
+4.  **Tag Characteristics**: Evaluate the tag's material, font, and RN numbers if visible.
 
 ## EXISTING DATABASE SUBJECTS
 The following subjects already exist in our database. If this shirt matches any of them, use the EXACT same subject name:
@@ -158,15 +162,14 @@ ${tagGuideContext || "No tag guide available."}
 
 ## RESPONSE FORMAT
 Respond ONLY with valid JSON in this exact format:
-{
   "subject": "The main subject/band/brand/artwork (e.g., 'Metallica', 'Harley-Davidson', 'Grateful Dead')",
   "category": "One of: Music, Motorcycle, Movie, Art, Sport, Advertising, Other",
-  "year": The estimated year as a number based on tag era and design style (e.g., 1991) or null if unknown,
+  "year": The estimated year as a number based on tag era, copyright date, and design style (e.g., 1991) or null if unknown,
   "year_range_start": The earliest possible year based on tag dating or null,
   "year_range_end": The latest possible year based on tag dating or null,
   "tag_brand": "The tag/maker brand if visible (e.g., 'Giant', 'Hanes', 'Fruit of the Loom') or null",
   "confidence": A number from 0-100 indicating your confidence in the identification,
-  "description": "A brief description of the shirt design and any notable features",
+  "description": "A brief description of the shirt design, notable features, specifically mentioning if it is single-stitch, visible copyright dates, and the condition (fading/cracking) that informed your appraisal.",
   "matched_existing_subject": true if the subject matches an existing database entry exactly, false otherwise
 }
 

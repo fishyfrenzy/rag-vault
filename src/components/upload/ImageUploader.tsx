@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload, X, Camera, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface ImageFile {
     file: File;
@@ -83,40 +84,50 @@ export function ImageUploader({
     };
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-6">
             {/* Drop Zone */}
-            <div
+            <motion.div
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
+                animate={{
+                    scale: dragActive ? 1.02 : 1,
+                    borderColor: dragActive ? "var(--primary)" : "var(--border)",
+                    backgroundColor: dragActive ? "rgba(var(--primary), 0.05)" : "transparent"
+                }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 className={cn(
-                    "relative border-2 border-dashed rounded-xl p-8 text-center transition-colors",
-                    dragActive ? "border-primary bg-primary/5" : "border-border",
+                    "relative border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer overflow-hidden",
+                    "hover:border-primary/50 hover:bg-primary/5 transition-colors duration-300",
                     disabled && "opacity-50 pointer-events-none"
                 )}
             >
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-500" />
                 <input
                     type="file"
                     accept="image/*"
                     multiple
                     onChange={handleInputChange}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     disabled={disabled || images.length >= maxImages}
                 />
 
-                <div className="space-y-4">
-                    <div className="flex justify-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
-                            <Camera className="w-6 h-6 text-muted-foreground" />
+                <div className="space-y-4 relative z-0">
+                    <motion.div
+                        className="flex justify-center gap-4"
+                        animate={{ y: dragActive ? -5 : 0 }}
+                    >
+                        <div className="w-14 h-14 rounded-full bg-secondary/80 backdrop-blur-sm flex items-center justify-center shadow-sm border border-border/50">
+                            <Camera className="w-7 h-7 text-muted-foreground" />
                         </div>
-                        <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
-                            <ImageIcon className="w-6 h-6 text-muted-foreground" />
+                        <div className="w-14 h-14 rounded-full bg-secondary/80 backdrop-blur-sm flex items-center justify-center shadow-sm border border-border/50">
+                            <ImageIcon className="w-7 h-7 text-muted-foreground" />
                         </div>
-                    </div>
+                    </motion.div>
 
-                    <div>
-                        <p className="font-medium">Drop photos here or tap to upload</p>
-                        <p className="text-sm text-muted-foreground mt-1">
+                    <div className="space-y-1">
+                        <p className="font-semibold text-lg tracking-tight">Drop photos here or tap to upload</p>
+                        <p className="text-sm text-muted-foreground">
                             {minImages > 1
                                 ? `Minimum ${minImages} photos (front & back required)`
                                 : "Upload a photo"
@@ -124,54 +135,71 @@ export function ImageUploader({
                         </p>
                     </div>
                 </div>
-            </div>
+            </motion.div>
 
             {/* Preview Grid */}
             {images.length > 0 && (
-                <div className="grid grid-cols-3 gap-2">
-                    {images.map((img, index) => (
-                        <div key={img.id} className="relative aspect-square">
-                            <img
-                                src={img.preview}
-                                alt={`Upload ${index + 1}`}
-                                className="w-full h-full object-cover rounded-lg"
-                            />
-                            <button
-                                onClick={() => removeImage(img.id)}
-                                className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center shadow-md"
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="grid grid-cols-3 sm:grid-cols-4 gap-3"
+                >
+                    <AnimatePresence>
+                        {images.map((img, index) => (
+                            <motion.div
+                                key={img.id}
+                                layout
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                transition={{ duration: 0.2 }}
+                                className="relative aspect-square group"
                             >
-                                <X className="w-4 h-4" />
-                            </button>
-                            {index === 0 && (
-                                <span className="absolute bottom-1 left-1 text-[10px] bg-black/60 text-white px-1.5 py-0.5 rounded">
-                                    Front
-                                </span>
-                            )}
-                            {index === 1 && (
-                                <span className="absolute bottom-1 left-1 text-[10px] bg-black/60 text-white px-1.5 py-0.5 rounded">
-                                    Back
-                                </span>
-                            )}
-                        </div>
-                    ))}
-                </div>
+                                <img
+                                    src={img.preview}
+                                    alt={`Upload ${index + 1}`}
+                                    className="w-full h-full object-cover rounded-xl shadow-sm border border-border/50"
+                                />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
+                                <button
+                                    onClick={() => removeImage(img.id)}
+                                    className="absolute -top-2 -right-2 w-7 h-7 bg-destructive/90 hover:bg-destructive text-destructive-foreground rounded-full flex items-center justify-center shadow-lg backdrop-blur-sm transition-transform hover:scale-110 opacity-0 group-hover:opacity-100 sm:opacity-100"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                                {index === 0 && (
+                                    <span className="absolute bottom-2 left-2 text-[10px] uppercase tracking-wider font-semibold bg-black/70 backdrop-blur-md text-white px-2 py-1 rounded-md shadow-sm">
+                                        Front
+                                    </span>
+                                )}
+                                {index === 1 && (
+                                    <span className="absolute bottom-2 left-2 text-[10px] uppercase tracking-wider font-semibold bg-black/70 backdrop-blur-md text-white px-2 py-1 rounded-md shadow-sm">
+                                        Back
+                                    </span>
+                                )}
+                            </motion.div>
+                        ))}
+                    </AnimatePresence>
+                </motion.div>
             )}
 
             {/* Status */}
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center justify-between text-sm px-1">
                 <span className={cn(
-                    "text-muted-foreground",
-                    images.length >= minImages && "text-green-500"
+                    "font-medium transition-colors",
+                    images.length >= minImages ? "text-primary" : "text-muted-foreground"
                 )}>
                     {images.length} / {maxImages} photos
-                    {images.length < minImages && ` (need ${minImages - images.length} more)`}
+                    {images.length < minImages && <span className="opacity-70 font-normal"> (need {minImages - images.length} more)</span>}
                 </span>
 
                 {images.length >= minImages && (
-                    <Button size="sm" disabled={disabled}>
-                        <Upload className="w-4 h-4 mr-2" />
-                        Analyze Photos
-                    </Button>
+                    <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
+                        <Button size="sm" disabled={disabled} className="rounded-full shadow-sm">
+                            <Upload className="w-4 h-4 mr-2" />
+                            Ready
+                        </Button>
+                    </motion.div>
                 )}
             </div>
         </div>
