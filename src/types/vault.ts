@@ -3,6 +3,44 @@
  * Centralized type definitions for vault items
  */
 
+export interface ShirtCut {
+    id: number;
+    name: string;
+    slug: string;
+    description: string | null;
+}
+
+export interface ShirtEra {
+    id: number;
+    name: string;
+    slug: string;
+    year_start: number | null;
+    year_end: number | null;
+    description: string | null;
+}
+
+export interface PrintMethod {
+    id: number;
+    name: string;
+    slug: string;
+    description: string | null;
+}
+
+export interface MasterDesign {
+    id: string;
+    subject: string;
+    brand: string | null;
+    title: string | null;
+    slug: string | null;
+    category: string | null;
+    year_start: number | null;
+    year_end: number | null;
+    tag_brand: string | null;
+    reference_image_url: string | null;
+    description: string | null;
+    average_price: number | null;
+}
+
 export interface VaultItem {
     id: string;
     subject: string;
@@ -31,6 +69,16 @@ export interface VaultItem {
     estimated_value_low: number | null;
     estimated_value_high: number | null;
     is_verified?: boolean;
+
+    // New Relational Fields (from Pillar 2 Overhaul)
+    master_design_id?: string | null;
+    master_design?: MasterDesign | null;
+    cut_id?: number | null;
+    cut?: ShirtCut | null;
+    era_id?: number | null;
+    era?: ShirtEra | null;
+    print_method_id?: number | null;
+    print_method?: PrintMethod | null;
 }
 
 export interface VaultItemSummary {
